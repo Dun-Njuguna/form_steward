@@ -1,5 +1,5 @@
 name: form_steward
-description: "A new Flutter package project."
+description: "form_steward is a dynamic form builder package that allows you to create and manage multi-step forms in Flutter based on JSON configuration. It supports custom form validation, stepper navigation, and flexible form field types, making it a powerful tool for building complex forms with ease."
 version: 0.0.1
 homepage:
 
