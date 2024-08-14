@@ -159,6 +159,6 @@ The following JSON configuration defines a simple two-step form with fields for 
     ]
     }
 
-Additional Information
+## Additional Information
 
 For more details on how to use form_steward, including advanced features and customization options, please refer to the documentation in the /docs directory. Contributions, issues, and feature requests are welcome.
