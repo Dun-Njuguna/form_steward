@@ -6,15 +6,15 @@ form_steward is a dynamic form builder package that allows you to create and man
     - Multi-step Navigation: Support for multi-step forms with customizable step titles and navigation controls.
     - Custom Form Validation: Define validation rules in the JSON configuration for each field.
     - Extensible Form Fields: Supports a variety of form field types, including text, number, and more.
-G
+
 ## Getting Started
 To start using the form_steward package, ensure you have the following prerequisites:
     - Flutter SDK installed.
     - Basic knowledge of Flutter and JSON.
 
 Add form_steward to your pubspec.yaml:
- dependencies:
-  form_steward: ^0.0.1
+
+    form_steward: ^0.0.1
   
 Then, run flutter pub get to install the package.
 
@@ -108,8 +108,8 @@ Below is a basic example of how to use form_steward in your Flutter project:
         ),
       ),
     );
-  }
-}
+    }
+    }
 
 
 ## Example JSON Configuration
