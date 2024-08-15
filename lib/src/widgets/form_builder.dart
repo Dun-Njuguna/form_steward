@@ -34,13 +34,10 @@ class FormBuilder extends StatelessWidget {
           .map((step) => Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Optionally include a title for each step:
-                  // Text(
-                  //   step.title,
-                  //   style: const TextStyle(
-                  //       fontSize: 18, fontWeight: FontWeight.bold),
-                  // ),
-                  ...step.fields.map((field) => FormFieldWidget(field: field)),
+                  ...step.fields.map((field) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 5.0),
+                        child: FormFieldWidget(field: field),
+                      )),
                 ],
               ))
           .toList(),
