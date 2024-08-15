@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:form_steward/src/utils/steward_stepper_type.dart';
 
 /// A widget that displays a step-by-step form with custom titles for each step.
-///
-/// The [StepperWidget] class creates a [Stepper] widget to manage and display
-/// a series of steps in a form. It supports custom titles for each step and
-/// handles navigation between steps using the provided callbacks.
 class StepperWidget extends StatelessWidget {
   /// The list of widgets to be displayed as the content of each step.
   final List<Widget> steps;
@@ -24,8 +21,8 @@ class StepperWidget extends StatelessWidget {
   /// The index of the currently active step.
   final int currentStep;
 
-  /// The orientation of the stepper.
-  final Axis orientation;
+  /// The type of stepper to render.
+  final StewardStepperType stepperType;
 
   const StepperWidget({
     super.key,
@@ -34,18 +31,20 @@ class StepperWidget extends StatelessWidget {
     required this.onNextClicked,
     required this.onBackClicked,
     required this.currentStep,
-    required this.orientation,
+    required this.stepperType,
     required this.onSubmitClicked,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: orientation == Axis.vertical
-          ? _buildVerticalStepper()
-          : _buildHorizontalStepper(context),
-    );
+    switch (stepperType) {
+      case StewardStepperType.vertical:
+        return _buildVerticalStepper();
+      case StewardStepperType.horizontal:
+        return _buildHorizontalStepper(context);
+      case StewardStepperType.tablet:
+        return _buildtabletStepper(context);
+    }
   }
 
   Widget _buildVerticalStepper() {
@@ -62,7 +61,6 @@ class StepperWidget extends StatelessWidget {
             onStepCancel:
                 currentStep > 0 ? onBackClicked as void Function()? : null,
             steps: _buildSteps(),
-            type: StepperType.vertical,
             controlsBuilder: (BuildContext context, ControlsDetails details) {
               return Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -151,6 +149,100 @@ class StepperWidget extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildtabletStepper(BuildContext context) {
+    return Row(
+      children: [
+        // Display the list of all steps on the left
+        SizedBox(
+          width: MediaQuery.of(context).size.width *
+              0.25, // 25% of the screen width
+          child: ListView.builder(
+            itemCount: titles.length,
+            itemBuilder: (context, index) {
+              final theme = Theme.of(context);
+              final isActive = index == currentStep;
+
+              return ListTile(
+                leading: CircleAvatar(
+                  radius: 14,
+                  backgroundColor: isActive
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withOpacity(0.1),
+                  foregroundColor: isActive
+                      ? theme.colorScheme.onPrimary
+                      : theme.colorScheme.onSurface,
+                  child: Text(
+                    '${index + 1}', // Step number
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                title: Text(
+                  titles[index],
+                  style: isActive
+                      ? TextStyle(color: theme.colorScheme.primary)
+                      : null,
+                ),
+                selected: isActive,
+                onTap: () {
+                  // Handle step change when a step is tapped
+                  if (index < currentStep) {
+                    onBackClicked();
+                  } else if (index > currentStep) {
+                    onNextClicked();
+                  }
+                },
+              );
+            },
+          ),
+        ),
+
+        // Display the content of the active step on the right
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 15),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: steps[currentStep],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      if (currentStep > 0)
+                        ElevatedButton(
+                          onPressed: onBackClicked as void Function()?,
+                          child: const Text('Back'),
+                        )
+                      else
+                        const Spacer(flex: 3),
+                      Text('${currentStep + 1}/${steps.length}'),
+                      if (currentStep == 0) const Spacer(flex: 2),
+                      currentStep == steps.length - 1
+                          ? ElevatedButton(
+                              onPressed: onSubmitClicked as void Function()?,
+                              child: const Text('Submit'),
+                            )
+                          : ElevatedButton(
+                              onPressed: onNextClicked as void Function()?,
+                              child: const Text('Next'),
+                            ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
