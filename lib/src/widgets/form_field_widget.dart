@@ -33,12 +33,12 @@ class FormFieldWidget extends StatelessWidget {
         return TextFormField(
           decoration: InputDecoration(labelText: field.label),
           validator: (value) {
-            if (field.validation.required && value!.isEmpty) {
+            if (field.validation?.required == true && value!.isEmpty) {
               return '${field.label} is required';
             }
-            if (field.validation.minLength != null &&
-                value!.length < field.validation.minLength!) {
-              return '${field.label} must be at least ${field.validation.minLength} characters';
+            if (field.validation?.minLength != null &&
+                value!.length < field.validation!.minLength!) {
+              return '${field.label} must be at least ${field.validation!.minLength} characters';
             }
             return null;
           },
@@ -48,7 +48,7 @@ class FormFieldWidget extends StatelessWidget {
           decoration: InputDecoration(labelText: field.label),
           keyboardType: TextInputType.number,
           validator: (value) {
-            if (field.validation.required && value!.isEmpty) {
+            if (field.validation?.required == true && value!.isEmpty) {
               return '${field.label} is required';
             }
             return null;

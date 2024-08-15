@@ -32,7 +32,7 @@ class ValidationModel {
   /// - [minLength]: The minimum length constraint for the field's value.
   /// - [maxLength]: The maximum length constraint for the field's value.
   ValidationModel({
-    required this.required,
+    this.required = false,
     this.minLength,
     this.maxLength,
   });
@@ -50,8 +50,8 @@ class ValidationModel {
   factory ValidationModel.fromJson(Map<String, dynamic> json) {
     return ValidationModel(
       required: json['required'],
-      minLength: json['minLength'],
-      maxLength: json['maxLength'],
+      minLength: json['minLength'] != null ? json['minLength'] : null,
+      maxLength: json['maxLength'] != null ? json['maxLength'] : null,
     );
   }
 }

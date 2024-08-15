@@ -31,7 +31,7 @@ class FieldModel {
   /// The [validation] contains the validation logic for the field, such as
   /// required status, minimum length, or custom validators. This is represented
   /// by the [ValidationModel] class.
-  final ValidationModel validation;
+  final ValidationModel? validation;
 
   /// Creates a new instance of the [FieldModel] class.
   ///
@@ -42,12 +42,11 @@ class FieldModel {
   /// - [label]: The label of the form field.
   /// - [name]: The name of the form field.
   /// - [validation]: The validation rules for the form field.
-  FieldModel({
-    required this.type,
-    required this.label,
-    required this.name,
-    required this.validation,
-  });
+  FieldModel(
+      {required this.type,
+      required this.label,
+      required this.name,
+      this.validation});
 
   /// Creates a new [FieldModel] instance from a JSON map.
   ///
@@ -64,7 +63,9 @@ class FieldModel {
       type: json['type'],
       label: json['label'],
       name: json['name'],
-      validation: ValidationModel.fromJson(json['validation']),
+      validation: json['validation'] != null
+          ? ValidationModel.fromJson(json['validation'])
+          : null,
     );
   }
 }
