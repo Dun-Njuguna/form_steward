@@ -51,7 +51,7 @@ export 'src/utils/json_parser.dart';
 export 'src/utils/validators.dart';
 
 // Exporting enums
-export 'src/utils/steward_stepper_type.dart';
+export 'src/utils/enums/steward_stepper_type.dart';
 
 // Exporting controllers
 export 'src/controllers/form_controller.dart';
