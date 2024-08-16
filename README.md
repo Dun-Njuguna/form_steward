@@ -20,96 +20,85 @@ Then, run flutter pub get to install the package.
 
 ## Usage
 
-Below is a basic example of how to use form_steward in your Flutter project:
+Below is an example of how to use form_steward in your Flutter project:
 
-    import 'package:flutter/material.dart';
-    import 'package:form_steward/form_steward.dart';
+      import 'package:flutter/material.dart';
+      import 'package:form_steward/form_steward.dart';
 
-    class DynamicFormPage extends StatefulWidget {
-    const DynamicFormPage({super.key});
-
-    @override
-    DynamicFormPageState createState() => DynamicFormPageState();
-    }
-
-    class DynamicFormPageState extends State<DynamicFormPage> {
-    List<FormStepModel>? _formSteps;
-    late FormController _formController;
-    late StepController _stepController;
-
-    @override
-    void initState() {
-        super.initState();
-        _formController = FormController();
-        _stepController = StepController();
-        _loadForm();
-    }
-
-    void _loadForm() async {
-        final jsonString = await DefaultAssetBundle.of(context)
-            .loadString('assets/form_config.json');
-        setState(() {
-        _formSteps = FormService().loadFormFromJson(jsonString);
+      class MyCustomStepperWidget extends StepperWidget {
+        const MyCustomStepperWidget({
+          super.key,
+          required super.steps,
+          required super.titles,
+          required super.currentStep,
+          required super.stepperType,
         });
-    }
 
-    @override
-    Widget build(BuildContext context) {
-        if (_formSteps == null) {
-        return const Center(
-            child: CircularProgressIndicator(),
-        );
+        @override
+        void onNextStep() {
+          // Custom implementation for the next step
         }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dynamic Form'),
-      ),
-      body: Form(
-        key: _formController.formKey,
-        child: Column(
-          children: [
-            Expanded(
-              child: StepperWidget(
+        @override
+        void onPreviousStep() {
+          // Custom implementation for the previous step
+        }
+
+        @override
+        void onSubmit() {
+          // Custom implementation for submission
+        }
+      }
+
+      class DynamicFormPage extends StatefulWidget {
+        const DynamicFormPage({super.key});
+
+        @override
+        DynamicFormPageState createState() => DynamicFormPageState();
+      }
+
+      class DynamicFormPageState extends State<DynamicFormPage> {
+        List<FormStepModel>? _formSteps;
+        late StepController _stepController;
+
+        @override
+        void initState() {
+          super.initState();
+          _stepController = StepController();
+          _loadForm();
+        }
+
+        void _loadForm() async {
+          final jsonString = await DefaultAssetBundle.of(context)
+              .loadString('assets/form_config.json');
+          setState(() {
+            _formSteps = FormService().loadFormFromJson(jsonString);
+          });
+        }
+
+        @override
+        Widget build(BuildContext context) {
+          if (_formSteps == null) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          return Scaffold(
+            body: Container(
+              padding: const EdgeInsets.all(12),
+              child: MyCustomStepperWidget(
+                stepperType: StewardStepperType.vertical,
                 steps: _formSteps!.map((step) {
                   return FormBuilder(steps: [step]);
                 }).toList(),
-                titles: _formSteps!
-                    .map((step) => step.title)
-                    .toList(), // Pass the titles here
+                titles: _formSteps!.map((step) => step.title).toList(),
                 currentStep: _stepController.currentStep,
-                onStepContinue: () {
-                  if (_stepController.isLastStep(_formSteps!.length)) {
-                    if (_formController.validateForm()) {
-                      _formController.saveForm();
-                      // Handle form submission here
-                    }
-                  } else {
-                    _stepController.nextStep();
-                    setState(() {});
-                  }
-                },
-                onStepCancel: () {
-                  _stepController.previousStep();
-                  setState(() {});
-                },
               ),
             ),
-            ElevatedButton(
-              onPressed: () {
-                if (_formController.validateForm()) {
-                  _formController.saveForm();
-                  // Handle form submission here
-                }
-              },
-              child: const Text('Submit'),
-            ),
-          ],
-        ),
-      ),
-    );
-    }
-    }
+          );
+        }
+      }
 
 
 ## Example JSON Configuration
