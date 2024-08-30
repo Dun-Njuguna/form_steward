@@ -1,61 +1,277 @@
 import 'package:flutter/material.dart';
+import 'package:form_steward/src/utils/file_picker_helper.dart';
 import '../models/field_model.dart';
+import '../models/option_model.dart'; // Import OptionModel
+import 'package:image_picker/image_picker.dart'; // Import for XFile
+import 'package:http/http.dart' as http;
 
-/// A widget that builds a form field based on the specified field model.
-///
-/// The [FormFieldWidget] class creates a form field UI component based on the
-/// type and validation rules specified in a [FieldModel] instance. It supports
-/// different field types such as text and number, applying appropriate validation
-/// logic for each type.
-class FormFieldWidget extends StatelessWidget {
-  /// The model that defines the properties and validation rules for the form field.
-  ///
-  /// The [field] parameter is a [FieldModel] instance that includes the type, label,
-  /// and validation rules for the form field. It determines how the form field is
-  /// rendered and validated.
+class FormFieldWidget extends StatefulWidget {
   final FieldModel field;
 
-  /// Creates a new instance of the [FormFieldWidget] class.
-  ///
-  /// The [field] parameter is required and should contain the model that defines
-  /// the form field's properties and validation rules.
-  ///
-  /// - Parameter field: The model defining the form field properties and validation rules.
   const FormFieldWidget({
     super.key,
     required this.field,
   });
 
   @override
+  FormFieldWidgetState createState() => FormFieldWidgetState();
+}
+
+class FormFieldWidgetState extends State<FormFieldWidget> {
+  dynamic _selectedValue;
+  XFile? _pickedFile;
+  XFile? _pickedImage;
+  XFile? _pickedAudio;
+  XFile? _pickedVideo;
+
+  final FilePickerHelper _filePickerHelper = FilePickerHelper();
+
+  @override
   Widget build(BuildContext context) {
-    switch (field.type) {
+    switch (widget.field.type) {
       case 'text':
         return TextFormField(
-          decoration: InputDecoration(labelText: field.label),
+          decoration: InputDecoration(labelText: widget.field.label),
           validator: (value) {
-            if (field.validation?.required == true && value!.isEmpty) {
-              return '${field.label} is required';
+            if (widget.field.validation?.required == true && value!.isEmpty) {
+              return '${widget.field.label} is required';
             }
-            if (field.validation?.minLength != null &&
-                value!.length < field.validation!.minLength!) {
-              return '${field.label} must be at least ${field.validation!.minLength} characters';
+            if (widget.field.validation?.minLength != null &&
+                value!.length < widget.field.validation!.minLength!) {
+              return '${widget.field.label} must be at least ${widget.field.validation!.minLength} characters';
             }
             return null;
           },
         );
       case 'number':
         return TextFormField(
-          decoration: InputDecoration(labelText: field.label),
+          decoration: InputDecoration(labelText: widget.field.label),
           keyboardType: TextInputType.number,
           validator: (value) {
-            if (field.validation?.required == true && value!.isEmpty) {
-              return '${field.label} is required';
+            if (widget.field.validation?.required == true && value!.isEmpty) {
+              return '${widget.field.label} is required';
             }
             return null;
           },
         );
+      case 'email':
+        return TextFormField(
+          decoration: InputDecoration(labelText: widget.field.label),
+          keyboardType: TextInputType.emailAddress,
+          validator: (value) {
+            if (widget.field.validation?.required == true && value!.isEmpty) {
+              return '${widget.field.label} is required';
+            }
+            if (widget.field.validation?.pattern != null &&
+                !RegExp(widget.field.validation!.pattern!).hasMatch(value!)) {
+              return 'Invalid ${widget.field.label}';
+            }
+            return null;
+          },
+        );
+
+      case 'tel':
+        return TextFormField(
+          decoration: InputDecoration(labelText: widget.field.label),
+          keyboardType: TextInputType.phone,
+          validator: (value) {
+            if (widget.field.validation?.required == true && value!.isEmpty) {
+              return '${widget.field.label} is required';
+            }
+            if (widget.field.validation?.pattern != null &&
+                !RegExp(widget.field.validation!.pattern!).hasMatch(value!)) {
+              return 'Invalid ${widget.field.label}';
+            }
+            return null;
+          },
+        );
+
+      case 'textarea':
+        return TextFormField(
+          decoration: InputDecoration(labelText: widget.field.label),
+          maxLines: 5,
+          validator: (value) {
+            if (widget.field.validation?.required == true && value!.isEmpty) {
+              return '${widget.field.label} is required';
+            }
+            if (widget.field.validation?.maxLength != null &&
+                value!.length > widget.field.validation!.maxLength!) {
+              return '${widget.field.label} cannot exceed ${widget.field.validation!.maxLength} characters';
+            }
+            return null;
+          },
+        );
+      case 'select':
+        return FutureBuilder<List<OptionModel>>(
+          future:
+              _fetchOptions(), // Changed the return type to List<OptionModel>
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const CircularProgressIndicator();
+            }
+            if (snapshot.hasError) {
+              return Text('Error fetching options');
+            }
+            final options = snapshot.data ?? [];
+            return DropdownButtonFormField<int>(
+              value: _selectedValue,
+              decoration: InputDecoration(labelText: widget.field.label),
+              items: options.map((OptionModel option) {
+                return DropdownMenuItem<int>(
+                  value: option.id,
+                  child: Text(option.value),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedValue = value;
+                });
+              },
+              validator: (value) {
+                if (widget.field.validation?.required == true &&
+                    value == null) {
+                  return '${widget.field.label} is required';
+                }
+                return null;
+              },
+            );
+          },
+        );
+      case 'checkbox':
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children:
+              (widget.field.options ?? []).map<Widget>((OptionModel option) {
+            return CheckboxListTile(
+              title: Text(option.value),
+              value: _selectedValue?.contains(option.id) ?? false,
+              onChanged: (isChecked) {
+                setState(() {
+                  if (isChecked == true) {
+                    _selectedValue = (_selectedValue ?? <int>[]).toList()
+                      ..add(option.id);
+                  } else {
+                    _selectedValue = (_selectedValue ?? <int>[]).toList()
+                      ..remove(option.id);
+                  }
+                });
+              },
+            );
+          }).toList(),
+        );
+      case 'radio':
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children:
+              (widget.field.options ?? []).map<Widget>((OptionModel option) {
+            return RadioListTile<int>(
+              title: Text(option.value),
+              value: option.id,
+              groupValue: _selectedValue,
+              onChanged: (value) {
+                setState(() {
+                  _selectedValue = value;
+                });
+              },
+            );
+          }).toList(),
+        );
+      case 'date':
+        return TextFormField(
+          decoration: InputDecoration(labelText: widget.field.label),
+          keyboardType: TextInputType.datetime,
+          onTap: () async {
+            final date = await showDatePicker(
+              context: context,
+              initialDate: DateTime.now(),
+              firstDate: DateTime(2000),
+              lastDate: DateTime(2100),
+            );
+            if (date != null) {
+              setState(() {
+                _selectedValue = date.toLocal().toString().split(' ')[0];
+              });
+            }
+          },
+          validator: (value) {
+            if (widget.field.validation?.required == true && value!.isEmpty) {
+              return '${widget.field.label} is required';
+            }
+            return null;
+          },
+          readOnly: true,
+          controller: TextEditingController(text: _selectedValue),
+        );
+
+      case 'file':
+        return ElevatedButton(
+          onPressed: () async {
+            final pickedFile = await _filePickerHelper.pickFile();
+            if (pickedFile != null) {
+              setState(() {
+                _pickedFile = pickedFile;
+              });
+            }
+          },
+          child: Text(widget.field.label),
+        );
+
+      case 'image':
+        return ElevatedButton(
+          onPressed: () async {
+            final pickedImage = await _filePickerHelper.pickImage();
+            if (pickedImage != null) {
+              setState(() {
+                _pickedImage = pickedImage;
+              });
+            }
+          },
+          child: Text(widget.field.label),
+        );
+
+      case 'audio':
+        return ElevatedButton(
+          onPressed: () async {
+            final pickedAudio = await _filePickerHelper.pickAudio();
+            if (pickedAudio != null) {
+              setState(() {
+                _pickedAudio = pickedAudio;
+              });
+            }
+          },
+          child: Text(widget.field.label),
+        );
+
+      case 'video':
+        return ElevatedButton(
+          onPressed: () async {
+            final pickedVideo = await _filePickerHelper.pickVideo();
+            if (pickedVideo != null) {
+              setState(() {
+                _pickedVideo = pickedVideo;
+              });
+            }
+          },
+          child: Text(widget.field.label),
+        );
+
+      // Other field cases
+
       default:
         return const SizedBox.shrink();
     }
+  }
+
+  Future<List<OptionModel>> _fetchOptions() async {
+    // Fetch options from a URL or other source based on the field's configuration
+    if (widget.field.fetchOptionsUrl != null) {
+      var uri = Uri.parse(widget.field.fetchOptionsUrl!);
+      final response = await http.get(uri); // Replace with actual fetch logic
+      // Assuming response is a list of maps, each representing an option.
+      return (response as List)
+          .map((optionJson) => OptionModel.fromMap(optionJson))
+          .toList();
+    }
+    return widget.field.options ?? [];
   }
 }
