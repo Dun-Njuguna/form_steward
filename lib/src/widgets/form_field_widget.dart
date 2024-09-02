@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:form_steward/src/utils/file_picker_result.dart';
-import 'package:form_steward/src/utils/steward_file_picker_helper.dart';
+import 'package:form_steward/src/models/file_result_model.dart';
+import 'package:form_steward/src/utils/file_picker/steward_file_picker_helper.dart';
 import 'package:form_steward/src/widgets/audio_recorder_widget.dart';
 import '../models/field_model.dart';
 import '../models/option_model.dart';

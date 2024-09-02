@@ -1,4 +1,4 @@
-import 'package:form_steward/src/utils/file_picker_result.dart';
+import 'package:form_steward/src/models/file_result_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:typed_data';

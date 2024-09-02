@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:form_steward/src/utils/audio_recording_controls.dart';
+import 'package:form_steward/src/utils/audio_recorder/audio_recording_controls.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
