@@ -39,7 +39,13 @@ class FieldModel {
   ///
   /// The [options] list contains possible values that the user can select from
   /// if the field type supports selectable options (like dropdowns or radio buttons).
-  final List<OptionModel>? options; // Added field for options
+  final List<OptionModel>? options;
+
+  /// The source for media fields (e.g., "gallery" or "capture").
+  ///
+  /// The [source] field specifies whether to pick the media from the gallery
+  /// or capture new media, relevant for fields of type "image", "audio", or "video".
+  final String? source; // New field for specifying media source
 
   FieldModel({
     required this.type,
@@ -50,7 +56,8 @@ class FieldModel {
     this.multiSelect,
     this.value,
     this.dependencies,
-    this.options, // Initialize options in constructor
+    this.options,
+    this.source,
   });
 
   factory FieldModel.fromJson(Map<String, dynamic> json) {
@@ -69,11 +76,12 @@ class FieldModel {
               .map((depJson) => DependencyModel.fromJson(depJson))
               .toList()
           : null,
-      options: json['options'] != null // Added options handling in fromJson
+      options: json['options'] != null
           ? (json['options'] as List)
               .map((optionJson) => OptionModel.fromMap(optionJson))
               .toList()
           : null,
+      source: json['source'],
     );
   }
 }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:form_steward/src/utils/file_picker_helper.dart';
+import 'package:form_steward/src/utils/file_picker_result.dart';
+import 'package:form_steward/src/utils/steward_file_picker_helper.dart';
+import 'package:form_steward/src/widgets/audio_recorder_widget.dart';
 import '../models/field_model.dart';
-import '../models/option_model.dart'; // Import OptionModel
-import 'package:image_picker/image_picker.dart'; // Import for XFile
+import '../models/option_model.dart';
 import 'package:http/http.dart' as http;
 
 class FormFieldWidget extends StatefulWidget {
@@ -19,10 +20,10 @@ class FormFieldWidget extends StatefulWidget {
 
 class FormFieldWidgetState extends State<FormFieldWidget> {
   dynamic _selectedValue;
-  XFile? _pickedFile;
-  XFile? _pickedImage;
-  XFile? _pickedAudio;
-  XFile? _pickedVideo;
+  StewardFilePickerResult? _pickedFile;
+  StewardFilePickerResult? _pickedImage;
+  StewardFilePickerResult? _pickedAudio;
+  StewardFilePickerResult? _pickedVideo;
 
   final FilePickerHelper _filePickerHelper = FilePickerHelper();
 
@@ -219,7 +220,16 @@ class FormFieldWidgetState extends State<FormFieldWidget> {
       case 'image':
         return ElevatedButton(
           onPressed: () async {
-            final pickedImage = await _filePickerHelper.pickImage();
+            StewardFilePickerResult? pickedImage;
+            if (widget.field.source == 'capture') {
+              // Capture a new image using the camera
+              pickedImage =
+                  await _filePickerHelper.pickOrCaptureImage(capture: true);
+            } else {
+              // Pick an image from the gallery
+              pickedImage = await _filePickerHelper.pickOrCaptureImage();
+            }
+
             if (pickedImage != null) {
               setState(() {
                 _pickedImage = pickedImage;
@@ -228,34 +238,36 @@ class FormFieldWidgetState extends State<FormFieldWidget> {
           },
           child: Text(widget.field.label),
         );
-
       case 'audio':
-        return ElevatedButton(
-          onPressed: () async {
-            final pickedAudio = await _filePickerHelper.pickAudio();
-            if (pickedAudio != null) {
-              setState(() {
-                _pickedAudio = pickedAudio;
-              });
+        return AudioRecorderWidget(
+          onAudioSaved: (String? savedFilePath) {
+            if (savedFilePath != null) {
+              // Handle the saved file path if needed
+              print("Audio file saved at: $savedFilePath");
+              setState(() {});
             }
           },
-          child: Text(widget.field.label),
         );
 
       case 'video':
         return ElevatedButton(
           onPressed: () async {
-            final pickedVideo = await _filePickerHelper.pickVideo();
-            if (pickedVideo != null) {
-              setState(() {
-                _pickedVideo = pickedVideo;
-              });
+            StewardFilePickerResult? pickedVideo;
+            if (widget.field.source == 'capture') {
+              // Record a new video using the camera
+              pickedVideo =
+                  await _filePickerHelper.pickOrCaptureVideo(capture: true);
+            } else {
+              // Pick a video file from the gallery
+              pickedVideo = await _filePickerHelper.pickOrCaptureVideo();
             }
+
+            setState(() {
+              _pickedVideo = pickedVideo;
+            });
           },
           child: Text(widget.field.label),
         );
-
-      // Other field cases
 
       default:
         return const SizedBox.shrink();
