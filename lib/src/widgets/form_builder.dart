@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:form_steward/src/state/form_steward_state_notifier.dart';
+import 'package:form_steward/src/state/validation_trigger_notifier.dart';
 import '../models/form_step_model.dart';
 import 'form_field_widget.dart';
 
@@ -16,6 +18,11 @@ class FormBuilder extends StatelessWidget {
   /// a list of fields to be displayed in that step.
   final List<FormStepModel> steps;
 
+  // Instance of FormStewardStateNotifier
+  final ValidationTriggerNotifier validationTriggerNotifier;
+
+  final FormStewardStateNotifier formStewardStateNotifier;
+
   /// Creates a new instance of the [FormBuilder] class.
   ///
   /// The [steps] parameter is required and should contain the form steps
@@ -25,22 +32,40 @@ class FormBuilder extends StatelessWidget {
   const FormBuilder({
     super.key,
     required this.steps,
+    required this.validationTriggerNotifier,
+    required this.formStewardStateNotifier,
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: steps
-          .map((step) => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ...step.fields.map((field) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 5.0),
-                        child: FormFieldWidget(field: field),
-                      )),
-                ],
-              ))
-          .toList(),
+      children: steps.map((step) {
+        // Initialize step validity
+        final Map<String, bool> fieldsValidity = {
+          for (var field in step.fields) field.name: true
+        };
+        formStewardStateNotifier.initializeStepValidity(
+          stepValidity: {
+            step.name: fieldsValidity,
+          },
+        );
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ...step.fields.map((field) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 5.0),
+                child: FormFieldWidget(
+                  field: field,
+                  stepName: step.name,
+                  validationTriggerNotifier: validationTriggerNotifier,
+                  formStewardStateNotifier: formStewardStateNotifier,
+                ),
+              );
+            }),
+          ],
+        );
+      }).toList(),
     );
   }
 }

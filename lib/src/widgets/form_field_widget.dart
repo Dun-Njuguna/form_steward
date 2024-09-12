@@ -6,8 +6,6 @@ import 'package:form_steward/src/widgets/fields/steward_file_picker_field.dart';
 import 'package:form_steward/src/widgets/fields/steward_mobile_field.dart';
 import 'package:form_steward/src/widgets/fields/steward_number_field.dart';
 import 'package:form_steward/src/widgets/fields/steward_text_field.dart';
-
-// Import custom field widgets
 import 'package:form_steward/src/widgets/fields/steward_textarea_field.dart';
 import 'package:form_steward/src/widgets/fields/steward_select_field.dart';
 import 'package:form_steward/src/widgets/fields/steward_checkbox_field.dart';
@@ -18,10 +16,16 @@ import 'package:form_steward/src/widgets/fields/steward_video_picker_field.dart'
 
 class FormFieldWidget extends StatefulWidget {
   final FieldModel field;
+  final String stepName;
+  final ValidationTriggerNotifier validationTriggerNotifier;
+  final FormStewardStateNotifier formStewardStateNotifier;
 
   const FormFieldWidget({
     super.key,
     required this.field,
+    required this.stepName,
+    required this.validationTriggerNotifier,
+    required this.formStewardStateNotifier,
   });
 
   @override
@@ -36,7 +40,10 @@ class FormFieldWidgetState extends State<FormFieldWidget> {
     switch (widget.field.type) {
       case 'text':
         return StewardTextFieldWidget(
+          stepName: widget.stepName,
           field: widget.field,
+          validationTriggerNotifier: widget.validationTriggerNotifier,
+          formStewardStateNotifier: widget.formStewardStateNotifier,
         );
       case 'number':
         return StewardNumberField(

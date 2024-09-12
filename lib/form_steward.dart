@@ -21,7 +21,7 @@
 ///   - [JsonParser]: Parses form configuration data from JSON strings into [FormStepModel] instances, enabling dynamic form creation from JSON.
 ///   - [Validators]: Includes static methods for common form validation tasks, such as checking for required fields and enforcing minimum length constraints.
 ///
-/// - **Enums:** Defines various types of steppers to customize form navigation.
+/// - **Enums:** Define various types of steppers to customize form navigation.
 ///   - [StewardStepperType]: Specifies different stepper layouts, allowing customization of how steps are displayed and navigated within the form.
 ///     - [vertical]: Displays the steps in a vertical layout. Navigation controls are located at the bottom of the stepper.
 ///     - [horizontal]: Shows steps in a horizontal layout. Navigation controls are positioned alongside the content.
@@ -34,6 +34,10 @@
 /// - **Services:** Provide functionality for loading and fetching form configurations.
 ///   - [FormService]: Loads form configurations from JSON strings and parses them into [FormStepModel] instances, facilitating dynamic form creation.
 ///   - [ApiService]: Fetches form configurations from a remote server via HTTP requests, enabling integration with backend systems for form data retrieval.
+///
+/// - **State Management:** Handle the form and stepper states.
+///   - [ValidationTriggerNotifier]: Manages triggers for validation actions across form fields.
+///   - [FormStewardStateNotifier]: Manages the overall state of the form, including the validation status of each step.
 library form_steward;
 
 // Exporting models
@@ -49,6 +53,10 @@ export 'src/widgets/form_builder.dart';
 // Exporting utils
 export 'src/utils/json_parser.dart';
 export 'src/utils/validators.dart';
+
+// Exporting state management
+export 'src/state/validation_trigger_notifier.dart';
+export 'src/state/form_steward_state_notifier.dart';
 
 // Exporting enums
 export 'src/utils/enums/steward_stepper_type.dart';

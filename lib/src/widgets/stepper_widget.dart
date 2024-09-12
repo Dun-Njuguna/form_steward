@@ -1,36 +1,58 @@
 import 'package:flutter/material.dart';
-import 'package:form_steward/src/utils/enums/steward_stepper_type.dart';
+import 'package:form_steward/form_steward.dart';
 import 'package:form_steward/src/utils/interfaces/stepper_navigation.dart';
 
-/// A customizable stepper widget that allows users to navigate through multiple steps.
-/// Supports vertical, horizontal, and tablet layouts.
+/// A customizable stepper widget that enables navigation through multiple steps.
+/// It supports vertical, horizontal, and tablet layouts.
 ///
-/// This widget handles step navigation and allows for custom behaviors by overriding
-/// the `onNextStep`, `onPreviousStep`, and `onSubmit` methods.
+/// The widget handles navigation between steps and allows custom behaviors through
+/// the `onNextStep`, `onPreviousStep`, and `onSubmit` methods. You can customize
+/// the layout and behavior of the stepper by providing different stepper types
+/// and overriding the default behavior of step transitions.
 class StepperWidget extends StatefulWidget implements StepperNavigation {
   /// Creates an instance of [StepperWidget].
   ///
-  /// [steps] is a list of widgets representing the content for each step.
-  /// [titles] is a list of titles corresponding to each step.
-  /// [currentStep] is the index of the currently active step.
-  /// [stepperType] determines the layout of the stepper (vertical, horizontal, or tablet).
-  const StepperWidget({
+  /// Requires a list of [FormStepModel] objects for the content of each step,
+  /// the current step index, the layout type, and notifiers for form state and validation.
+  StepperWidget({
     super.key,
-    required this.steps,
-    required this.titles,
+    required this.formSteps,
     required this.currentStep,
     required this.stepperType,
+    required this.formStewardNotifier,
+    required this.formStewardStateNotifier,
   });
 
-  /// List of widgets representing the content for each step.
+  /// A list of [FormStepModel] objects, each representing a step in the stepper.
   ///
-  /// Each widget should represent the content for a specific step in the stepper.
-  final List<Widget> steps;
+  /// Each [FormStepModel] should include the content and validation requirements
+  /// for the specific step.
+  final List<FormStepModel> formSteps;
 
-  /// List of titles corresponding to each step.
-  ///
-  /// The titles are displayed alongside each step and help identify the content of each step.
-  final List<String> titles;
+/// A list of [Widget]s where each widget is a [FormBuilder] instance.
+///
+/// This list is created by mapping over [formSteps], where each step is used
+/// to instantiate a [FormBuilder] widget. Each [FormBuilder] is configured
+/// with the following parameters:
+/// - `steps`: A list containing a single [FormStepModel] representing the current step.
+/// - `validationTriggerNotifier`: A notifier used to trigger validation for the form.
+/// - `formStewardStateNotifier`: A notifier managing the state of the form.
+///
+/// The resulting list of [FormBuilder] widgets corresponds to each step in the
+/// form, with each widget handling its specific step's content and validation.
+///
+/// The list is populated by transforming the [formSteps] into [FormBuilder] widgets
+/// and then converting the iterable to a list.
+///
+/// This list is used to display the form steps in the [StepperWidget], with each
+/// step's content and validation being managed by its respective [FormBuilder] instance.
+late final List<Widget> stepWidgets = formSteps.map((step) {
+  return FormBuilder(
+    steps: [step],
+    validationTriggerNotifier: formStewardNotifier,
+    formStewardStateNotifier: formStewardStateNotifier,
+  );
+}).toList();
 
   /// The index of the currently active step.
   ///
@@ -39,21 +61,29 @@ class StepperWidget extends StatefulWidget implements StepperNavigation {
 
   /// The type of stepper layout to use.
   ///
-  /// This defines the layout style of the stepper. Possible values include vertical,
-  /// horizontal, and tablet.
+  /// Defines the layout style of the stepper. Possible values are:
+  /// - [StewardStepperType.vertical]
+  /// - [StewardStepperType.horizontal]
+  /// - [StewardStepperType.tablet]
   final StewardStepperType stepperType;
+
+  /// Notifier for triggering form validation.
+  final ValidationTriggerNotifier formStewardNotifier;
+
+  /// Notifier for managing the form state.
+  final FormStewardStateNotifier formStewardStateNotifier;
 
   @override
   StepperWidgetState createState() => StepperWidgetState();
 
   @override
-  void onNextStep() {}
+  void onNextStep({required Map<String, dynamic>? previousStepData}) {}
 
   @override
   void onPreviousStep() {}
 
   @override
-  void onSubmit() {}
+  void onSubmit({required Map<String, Map<String, dynamic>> formData}) {}
 }
 
 class StepperWidgetState extends State<StepperWidget> {
@@ -72,7 +102,6 @@ class StepperWidgetState extends State<StepperWidget> {
   void didUpdateWidget(covariant StepperWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.currentStep != oldWidget.currentStep) {
-      // Update the step notifier and scroll to the new active step if needed
       _currentStepNotifier.value = widget.currentStep;
       _scrollToActiveStep();
     }
@@ -84,10 +113,7 @@ class StepperWidgetState extends State<StepperWidget> {
     super.dispose();
   }
 
-  /// Scrolls to the currently active step in the list if it's not already visible.
-  ///
-  /// This method is used to ensure the active step is visible in the viewport,
-  /// particularly useful for the tablet layout where steps are displayed in a scrollable list.
+  /// Scrolls to the active step if the layout type is [StewardStepperType.tablet].
   void _scrollToActiveStep() {
     if (widget.stepperType != StewardStepperType.tablet) return;
 
@@ -95,12 +121,10 @@ class StepperWidgetState extends State<StepperWidget> {
       final stepIndex = _currentStepNotifier.value;
       final itemOffset = _itemHeight * stepIndex;
 
-      // Only scroll if the step is not already visible
       if (_isStepVisible(stepIndex)) {
-        return; // No need to scroll
+        return;
       }
 
-      // Animate scrolling to the new step
       _scrollController.animateTo(
         itemOffset,
         duration: const Duration(milliseconds: 300),
@@ -109,10 +133,7 @@ class StepperWidgetState extends State<StepperWidget> {
     });
   }
 
-  /// Checks if the step at [index] is currently visible in the viewport.
-  ///
-  /// [index] is the index of the step to check.
-  /// Returns true if the step is visible, otherwise false.
+  /// Checks if a step at the given index is visible within the viewport.
   bool _isStepVisible(int index) {
     final viewport = _scrollController.position;
     final itemOffset = _itemHeight * index;
@@ -122,27 +143,26 @@ class StepperWidgetState extends State<StepperWidget> {
         itemEndOffset <= viewport.pixels + viewport.viewportDimension;
   }
 
-  /// Advances to the next step if possible.
-  ///
-  /// Calls [onNextStep] and updates the current step index.
-  /// If [position] is provided, it will set the current step to that position.
+  /// Navigates to the next step, optionally setting the position.
   void _goToNextStep(int? position) {
-    widget.onNextStep();
-
+    final data = widget.formStewardStateNotifier.getCurrentStepData(
+      currentStepName: widget.formSteps[_currentStepNotifier.value].name,
+    );
     setState(() {
       position != null
           ? _currentStepNotifier.value = position
           : _currentStepNotifier.value++;
       _scrollToActiveStep();
     });
+    widget.onNextStep(previousStepData: data);
   }
 
-  /// Moves to the previous step if possible.
-  ///
-  /// Calls [onPreviousStep] and updates the current step index.
-  /// If [position] is provided, it will set the current step to that position.
+  /// Navigates to the previous step, optionally setting the position.
   void _goToPreviousStep(int? position) {
-    widget.onPreviousStep();
+    widget.formStewardNotifier.triggerValidation(
+      widget.formSteps[_currentStepNotifier.value].name,
+    );
+
     if (_currentStepNotifier.value > 0) {
       setState(() {
         position != null
@@ -153,17 +173,14 @@ class StepperWidgetState extends State<StepperWidget> {
     }
   }
 
-  /// Submits the form and prints a submission message.
-  ///
-  /// Calls [onSubmit] and prints 'Form submitted' to the console.
+  /// Submits the form and calls the `onSubmit` method with the collected form data.
   void _submitForm() {
-    widget.onSubmit();
-    print('Form submitted');
+    final data = widget.formStewardStateNotifier.getFormData();
+    widget.onSubmit(formData: data);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Build the widget based on the stepper type
     switch (widget.stepperType) {
       case StewardStepperType.vertical:
         return _buildVerticalStepper();
@@ -174,10 +191,7 @@ class StepperWidgetState extends State<StepperWidget> {
     }
   }
 
-  /// Builds the layout for a vertical stepper.
-  ///
-  /// Displays the steps in a vertical column with navigation controls at the bottom.
-  /// Handles step tapping to navigate between steps or submit the form.
+  /// Builds the vertical layout for the stepper.
   Widget _buildVerticalStepper() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,18 +200,17 @@ class StepperWidgetState extends State<StepperWidget> {
           child: Stepper(
             currentStep: _currentStepNotifier.value,
             onStepTapped: (int index) {
-              // Handle step tap
               if (_currentStepNotifier.value > index) {
                 _goToPreviousStep(index);
               } else {
-                _currentStepNotifier.value == widget.steps.length - 1
+                _currentStepNotifier.value == widget.stepWidgets.length - 1
                     ? _submitForm()
                     : _goToNextStep(index);
               }
             },
             onStepContinue:
-                _currentStepNotifier.value == widget.steps.length - 1
-                    ? _submitForm
+                _currentStepNotifier.value == widget.stepWidgets.length - 1
+                    ? () => _submitForm()
                     : () {
                         _goToNextStep(null);
                       },
@@ -216,9 +229,20 @@ class StepperWidgetState extends State<StepperWidget> {
                     ),
                   const Spacer(flex: 5),
                   ElevatedButton(
-                    onPressed: details.onStepContinue,
+                    onPressed: () {
+                      widget.formStewardNotifier.triggerValidation(
+                          widget.formSteps[widget.currentStep].name);
+                      if (widget.formStewardStateNotifier.isStepValid(
+                        stepName: widget.formSteps[widget.currentStep].name,
+                      )) {
+                        details.onStepContinue!();
+                      } else {
+                        widget.formStewardNotifier.reset();
+                      }
+                    },
                     child: Text(
-                      _currentStepNotifier.value == widget.steps.length - 1
+                      _currentStepNotifier.value ==
+                              widget.stepWidgets.length - 1
                           ? 'Submit'
                           : 'Next',
                     ),
@@ -232,10 +256,7 @@ class StepperWidgetState extends State<StepperWidget> {
     );
   }
 
-  /// Builds the layout for a horizontal stepper.
-  ///
-  /// Displays the steps in a horizontal stack with navigation controls at the bottom.
-  /// Handles step navigation with "Back" and "Next" buttons.
+  /// Builds the horizontal layout for the stepper.
   Widget _buildHorizontalStepper(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(top: 50.0),
@@ -245,13 +266,13 @@ class StepperWidgetState extends State<StepperWidget> {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
-              widget.titles[_currentStepNotifier.value],
+              widget.formSteps[_currentStepNotifier.value].title,
             ),
           ),
           Expanded(
             child: IndexedStack(
               index: _currentStepNotifier.value,
-              children: widget.steps,
+              children: widget.stepWidgets,
             ),
           ),
           Padding(
@@ -269,11 +290,11 @@ class StepperWidgetState extends State<StepperWidget> {
                 else
                   const Spacer(flex: 3),
                 Text(
-                    '${_currentStepNotifier.value + 1}/${widget.steps.length}'),
+                    '${_currentStepNotifier.value + 1}/${widget.stepWidgets.length}'),
                 if (_currentStepNotifier.value == 0) const Spacer(flex: 2),
-                _currentStepNotifier.value == widget.steps.length - 1
+                _currentStepNotifier.value == widget.stepWidgets.length - 1
                     ? ElevatedButton(
-                        onPressed: _submitForm,
+                        onPressed: () => _submitForm(),
                         child: const Text('Submit'),
                       )
                     : ElevatedButton(
@@ -290,10 +311,7 @@ class StepperWidgetState extends State<StepperWidget> {
     );
   }
 
-  /// Builds the layout for a tablet stepper.
-  ///
-  /// Displays a vertical list of steps on the left and content on the right.
-  /// The list is scrollable, and the content changes based on the selected step.
+  /// Builds the tablet layout for the stepper.
   Widget _buildTabletStepper(BuildContext context) {
     return Row(
       children: [
@@ -308,7 +326,7 @@ class StepperWidgetState extends State<StepperWidget> {
               padding: const EdgeInsets.only(right: 7),
               child: ListView.builder(
                 controller: _scrollController,
-                itemCount: widget.titles.length,
+                itemCount: widget.formSteps.length,
                 itemBuilder: (context, index) {
                   final theme = Theme.of(context);
                   final isActive = index == _currentStepNotifier.value;
@@ -328,7 +346,7 @@ class StepperWidgetState extends State<StepperWidget> {
                       ),
                     ),
                     title: Text(
-                      widget.titles[index],
+                      widget.formSteps[index].title,
                       style: isActive
                           ? TextStyle(color: theme.colorScheme.primary)
                           : null,
@@ -356,7 +374,7 @@ class StepperWidgetState extends State<StepperWidget> {
                 Expanded(
                   child: IndexedStack(
                     index: _currentStepNotifier.value,
-                    children: widget.steps,
+                    children: widget.stepWidgets,
                   ),
                 ),
                 Padding(
@@ -366,7 +384,7 @@ class StepperWidgetState extends State<StepperWidget> {
                     children: [
                       if (_currentStepNotifier.value > 0)
                         ElevatedButton(
-                          onPressed: (){
+                          onPressed: () {
                             _goToPreviousStep(null);
                           },
                           child: const Text('Back'),
@@ -374,12 +392,13 @@ class StepperWidgetState extends State<StepperWidget> {
                       else
                         const Spacer(flex: 3),
                       Text(
-                          '${_currentStepNotifier.value + 1}/${widget.steps.length}'),
+                          '${_currentStepNotifier.value + 1}/${widget.stepWidgets.length}'),
                       if (_currentStepNotifier.value == 0)
                         const Spacer(flex: 2),
-                      _currentStepNotifier.value == widget.steps.length - 1
+                      _currentStepNotifier.value ==
+                              widget.stepWidgets.length - 1
                           ? ElevatedButton(
-                              onPressed: _submitForm,
+                              onPressed: () => _submitForm(),
                               child: const Text('Submit'),
                             )
                           : ElevatedButton(
@@ -399,20 +418,33 @@ class StepperWidgetState extends State<StepperWidget> {
     );
   }
 
-  /// Builds the list of steps for the [Stepper] widget.
+  /// Builds a list of [Step] widgets for the stepper.
   ///
-  /// Creates a list of [Step] widgets, each representing a step in the stepper.
-  /// The current step is marked as active and editable.
+  /// Creates a list of [Step] widgets where each step corresponds to a
+  /// [FormStepModel] and its index in the stepper. The state of each step
+  /// is determined by its index relative to the current step.
   List<Step> _buildSteps() {
-    return List.generate(widget.steps.length, (index) {
+    return List<Step>.generate(widget.stepWidgets.length, (int index) {
       return Step(
-        title: Text(widget.titles[index]),
-        content: widget.steps[index],
+        title: Text(widget.formSteps[index].title),
+        content: widget.stepWidgets[index],
         isActive: index == _currentStepNotifier.value,
-        state: index == _currentStepNotifier.value
-            ? StepState.editing
-            : StepState.indexed,
+        state: _getStepState(index),
       );
     });
+  }
+
+  /// Determines the state of a step based on its index and the current step.
+  ///
+  /// [index] is the index of the step being evaluated.
+  /// Returns the state of the step as a [StepState].
+  StepState _getStepState(int index) {
+    if (index == _currentStepNotifier.value) {
+      return StepState.editing;
+    } else if (index < _currentStepNotifier.value) {
+      return StepState.complete;
+    } else {
+      return StepState.disabled;
+    }
   }
 }

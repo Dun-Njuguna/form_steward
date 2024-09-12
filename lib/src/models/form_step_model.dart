@@ -10,17 +10,22 @@ class FormStepModel {
   /// The title of the form step.
   final String title;
 
+  /// The name of the form step.
+  final String name;
+
   /// The list of form fields associated with this step.
   final List<FieldModel> fields;
 
   FormStepModel({
     required this.title,
+    required this.name,
     required this.fields,
   });
 
   factory FormStepModel.fromJson(Map<String, dynamic> json) {
     return FormStepModel(
       title: json['title'],
+      name: json['name'],
       fields: (json['fields'] as List)
           .map((fieldJson) => FieldModel.fromJson(fieldJson))
           .toList(),
