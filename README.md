@@ -37,17 +37,18 @@ import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 
 class MyCustomStepperWidget extends StepperWidget {
-  const MyCustomStepperWidget({
+  MyCustomStepperWidget({
     super.key,
-    required super.steps,
-    required super.titles,
     required super.currentStep,
     required super.stepperType,
+    required super.formStewardNotifier,
+    required super.formStewardStateNotifier, 
+    required super.formSteps,
   });
 
   @override
-  void onNextStep() {
-    // Custom implementation for the next step
+  void onNextStep({required Map<String, dynamic>? previousStepData}) {
+    print("previous step data...... ${previousStepData?.entries}");
   }
 
   @override
@@ -56,8 +57,8 @@ class MyCustomStepperWidget extends StepperWidget {
   }
 
   @override
-  void onSubmit() {
-    // Custom implementation for submission
+  void onSubmit({required Map<String, Map<String, dynamic>> formData}) {
+    print("form data.....  ${formData.entries}");
   }
 }
 
@@ -94,22 +95,25 @@ class DynamicFormPageState extends State<DynamicFormPage> {
         child: CircularProgressIndicator(),
       );
     }
-
+    final validationTriggerNotifier = ValidationTriggerNotifier();
+    final formStewardStateNotifier = FormStewardStateNotifier();
     return Scaffold(
       body: Container(
         padding: const EdgeInsets.all(12),
-        child: MyCustomStepperWidget(
-          stepperType: StewardStepperType.vertical,
-          steps: _formSteps!.map((step) {
-            return FormBuilder(steps: [step]);
-          }).toList(),
-          titles: _formSteps!.map((step) => step.title).toList(),
-          currentStep: _stepController.currentStep,
-        ),
+      child: _formSteps != null
+          ? MyCustomStepperWidget(
+              stepperType: StewardStepperType.vertical,
+              formStewardNotifier: validationTriggerNotifier,
+              formStewardStateNotifier: formStewardStateNotifier,
+              formSteps: _formSteps!,
+              currentStep: _stepController.currentStep,
+            )
+          : const Text("Steps not available"),
       ),
     );
   }
 }
+
 ```
 
 ## Example JSON Configuration
@@ -119,46 +123,79 @@ The following JSON configuration defines a simple two-step form with fields for 
 ```json
 {
   "formName": "User Information Form",
+  "formConfig": {
+    "defaultValues": {
+      "vehicle_make": 1,
+      "vehicle_model": 1
+    }
+  },
   "steps": [
     {
+      "id": 1,
       "title": "Personal Information",
+      "name": "personal_information",
       "fields": [
         {
+          "id": 1,
           "type": "text",
           "label": "First Name",
           "name": "first_name",
           "validation": {
             "required": true,
-            "minLength": 2
-          }
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "value": "John" 
         },
         {
+          "id": 2,
           "type": "text",
           "label": "Last Name",
           "name": "last_name",
           "validation": {
             "required": true,
-            "minLength": 2
-          }
-        }
-      ]
-    },
-    {
-      "title": "Contact Information",
-      "fields": [
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "value": "Doe"
+        },
         {
-          "type": "number",
-          "label": "Phone Number",
-          "name": "phone_number",
+          "id": 3,
+          "type": "date",
+          "label": "Date of Birth",
+          "name": "date_of_birth",
           "validation": {
-            "required": true,
-            "minLength": 10
-          }
+            "required": true
+          },
+          "value": "1990-01-01"
+        },
+        {
+          "id": 4,
+          "type": "radio",
+          "label": "Gender",
+          "name": "gender",
+          "validation": {
+            "required": true
+          },
+          "options": [
+            {"id": 1, "value": "Male"},
+            {"id": 2, "value": "Female"},
+            {"id": 3, "value": "Other"}
+          ],
+          "value": 1
         }
       ]
     }
+  ],
+  "dependencies": [
+    {
+      "fieldId": 9,
+      "dependsOnFieldId": 8,
+      "stepId": 3
+    }
   ]
 }
+
 ```
 
 ## Dynamic Options and URL Parameters
