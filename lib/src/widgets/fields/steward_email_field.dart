@@ -1,3 +1,4 @@
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 
@@ -98,11 +99,10 @@ class _StewardEmailFieldState extends State<StewardEmailField> {
       updateState(false);
       return;
     }
-
     // Email pattern validation
     if (widget.field.validation?.pattern != null && textValue != null) {
-      final emailPattern = RegExp(widget.field.validation!.pattern!);
-      if (!emailPattern.hasMatch(textValue!)) {
+      
+      if (!EmailValidator.validate(textValue!)) {
         setState(() {
           _errorMessage = 'Invalid ${widget.field.label}';
         });
