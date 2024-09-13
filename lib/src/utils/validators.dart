@@ -1,11 +1,11 @@
 class Validators {
-  
   static bool validateRequiredField({
+    required bool validationRequired,
     required String fieldLabel,
     required String? fieldValue,
     required Function(String? errorMessage) setError,
   }) {
-    if (fieldValue == null || fieldValue.isEmpty) {
+    if (validationRequired && (fieldValue == null || fieldValue.isEmpty)) {
       setError('$fieldLabel is required');
       return false;
     } else {

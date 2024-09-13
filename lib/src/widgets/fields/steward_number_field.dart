@@ -85,6 +85,7 @@ class _StewardNumberFieldState extends State<StewardNumberField> {
   void _validate([String? value]) {
     // Required field validation
     bool isValid = Validators.validateRequiredField(
+      validationRequired: widget.field.validation?.required ?? false,
       fieldLabel: widget.field.label,
       fieldValue: textValue,
       setError: (errorMessage) {
