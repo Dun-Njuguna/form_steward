@@ -47,15 +47,24 @@ class FormFieldWidgetState extends State<FormFieldWidget> {
         );
       case 'number':
         return StewardNumberField(
+          stepName: widget.stepName,
           field: widget.field,
+          validationTriggerNotifier: widget.validationTriggerNotifier,
+          formStewardStateNotifier: widget.formStewardStateNotifier,
         );
       case 'email':
         return StewardEmailField(
+          stepName: widget.stepName,
           field: widget.field,
+          validationTriggerNotifier: widget.validationTriggerNotifier,
+          formStewardStateNotifier: widget.formStewardStateNotifier,
         );
       case 'tel':
         return StewardMobileField(
+          stepName: widget.stepName,
           field: widget.field,
+          validationTriggerNotifier: widget.validationTriggerNotifier,
+          formStewardStateNotifier: widget.formStewardStateNotifier,
         );
       case 'textarea':
         return StewardTextareaField(
