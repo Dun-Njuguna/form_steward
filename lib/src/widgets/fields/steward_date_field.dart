@@ -4,13 +4,18 @@ import 'package:form_steward/form_steward.dart';
 /// A widget that represents a date input field within a form managed by Form Steward.
 ///
 /// The [StewardDateField] widget allows users to select a date or year. It integrates with
-/// the Form Steward state management system to handle validation and state updates.
+/// the Form Steward state management system to handle validation and state updates. The widget 
+/// listens for validation triggers and updates the form state accordingly.
 ///
-/// The widget receives a [FieldModel] that defines the field's properties, including the
-/// label and validation rules. It supports selecting either a specific date or just a year.
+/// ## Parameters:
+/// 
+/// - [field]: The [FieldModel] that defines the properties and validation rules for this field.
+/// - [stepName]: The name of the step that this field belongs to.
+/// - [formStewardStateNotifier]: The instance of [FormStewardStateNotifier] that manages the form state.
+/// - [validationTriggerNotifier]: The instance of [ValidationTriggerNotifier] that listens for validation triggers.
 ///
-/// The widget listens to validation triggers and updates the form state using
-/// [FormStewardStateNotifier] and [ValidationTriggerNotifier].
+/// The widget supports selecting either a specific date or just a year depending on the validation 
+/// properties in [field].
 class StewardDateField extends StatefulWidget {
   /// The model representing the field's properties and validation rules.
   final FieldModel field;
@@ -100,97 +105,101 @@ class StewardDateFieldState extends State<StewardDateField> {
     );
   }
 
-/// Opens a dialog to pick a year.
-void _pickYear(BuildContext context) {
-  final theme = Theme.of(context);
-  final buttonColor = theme.primaryColor;
-  final int currentYear = DateTime.now().year;
+  /// Opens a dialog to allow the user to pick a year.
+  ///
+  /// This method shows an [AlertDialog] with a grid of years for selection. Upon selecting
+  /// a year, it updates the `_selectedDate` and triggers validation.
+  void _pickYear(BuildContext context) {
+    final theme = Theme.of(context);
+    final buttonColor = theme.primaryColor;
+    final int currentYear = DateTime.now().year;
 
-  showDialog(
-    context: context,
-    builder: (context) {
-      final Size size = MediaQuery.of(context).size;
-      return StatefulBuilder(
-        builder: (BuildContext context, StateSetter setState) {
-          return AlertDialog(
-            title: Text('select year', style: TextStyle(color: buttonColor)),
-            contentPadding: const EdgeInsets.all(10),
-            content: SizedBox(
-              height: size.height / 3,
-              width: size.width,
-              child: Scrollbar(
-                thumbVisibility: true,
-                child: GridView.count(
-                  crossAxisCount: 3,
-                  children: [
-                    ...List.generate(
-                      130,
-                      (index) {
-                        final year = currentYear - index;
-                        return InkWell(
-                          onTap: () {
-                            setState(() {
-                              _selectedDate = year.toString();
-                            });
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.all(8.0),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: _selectedDate?.startsWith('$year') == true
-                                    ? buttonColor
-                                    : Colors.grey,
-                                width: 1.0,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Center(
-                              child: Text(
-                                year.toString(),
-                                style: TextStyle(
+    showDialog(
+      context: context,
+      builder: (context) {
+        final Size size = MediaQuery.of(context).size;
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: Text('Select Year', style: TextStyle(color: buttonColor)),
+              contentPadding: const EdgeInsets.all(10),
+              content: SizedBox(
+                height: size.height / 3,
+                width: size.width,
+                child: Scrollbar(
+                  thumbVisibility: true,
+                  child: GridView.count(
+                    crossAxisCount: 3,
+                    children: [
+                      ...List.generate(
+                        130,
+                        (index) {
+                          final year = currentYear - index;
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                _selectedDate = year.toString();
+                              });
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.all(8.0),
+                              decoration: BoxDecoration(
+                                border: Border.all(
                                   color: _selectedDate?.startsWith('$year') == true
                                       ? buttonColor
-                                      : Colors.black,
+                                      : Colors.grey,
+                                  width: 1.0,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  year.toString(),
+                                  style: TextStyle(
+                                    color: _selectedDate?.startsWith('$year') == true
+                                        ? buttonColor
+                                        : Colors.black,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: Text('Cancel', style: TextStyle(color: buttonColor)),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  // Trigger validation on year selection.
-                  _validate(_selectedDate);
-                },
-                child: Text('Okay', style: TextStyle(color: buttonColor)),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
-}
-
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text('Cancel', style: TextStyle(color: buttonColor)),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    // Trigger validation on year selection.
+                    _validate(_selectedDate);
+                  },
+                  child: Text('Okay', style: TextStyle(color: buttonColor)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 
   /// Validates the date field based on the required validation rule.
   ///
-  /// If the field is required but no date is selected, an error message is
-  /// displayed, and the form state is updated as invalid. Otherwise, the error
+  /// If the field is required but no date or year is selected, an error message is
+  /// displayed and the form state is updated as invalid. Otherwise, the error
   /// message is cleared, and the form state is updated as valid.
+  ///
+  /// - [value]: The selected date or year, used for validation.
   void _validate([String? value]) {
     bool isValid = Validators.validateRequiredField(
       validationRequired: widget.field.validation?.required ?? false,
@@ -217,8 +226,10 @@ void _pickYear(BuildContext context) {
 
   /// Updates the form state using [FormStewardStateNotifier].
   ///
-  /// The method updates the form state by passing the field name, the current
-  /// value, and the validity status of the field to [FormStewardStateNotifier].
+  /// This method updates the form state by passing the field name, current value,
+  /// and the validity status of the field to the [FormStewardStateNotifier].
+  ///
+  /// - [isValid]: The validation status of the current field.
   void updateState(bool isValid) {
     widget.formStewardStateNotifier.updateField(
       stepName: widget.stepName,
@@ -228,10 +239,10 @@ void _pickYear(BuildContext context) {
     );
   }
 
-  /// Handles the validation trigger when [ValidationTriggerNotifier] triggers validation.
+  /// Handles validation when triggered by the [ValidationTriggerNotifier].
   ///
-  /// This method listens for validation triggers specific to this field's step
-  /// and validates the field when the trigger occurs.
+  /// This method listens for validation triggers specific to this field's step and
+  /// performs validation when the trigger occurs.
   void _onValidationTrigger() {
     if (widget.validationTriggerNotifier.value == widget.stepName) {
       _validate(_selectedDate);
