@@ -17,6 +17,8 @@ class ValidationModel {
   /// The regex pattern for custom validation (e.g., email, phone number).
   final String? pattern;
 
+  final bool? yearOnly;
+
   /// Creates a new instance of the [ValidationModel] class.
   ///
   /// All properties are required or optional based on the validation requirements.
@@ -30,6 +32,7 @@ class ValidationModel {
     this.minLength,
     this.maxLength,
     this.pattern,
+    this.yearOnly,
   });
 
   /// Creates a new [ValidationModel] instance from a JSON map.
@@ -48,6 +51,7 @@ class ValidationModel {
       minLength: json['minLength'],
       maxLength: json['maxLength'],
       pattern: json['pattern'],
+      yearOnly: json['yearOnly'],
     );
   }
 }
