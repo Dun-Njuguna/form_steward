@@ -1,27 +1,17 @@
-/// A utility class for form validation.
-///
-/// The [Validators] class provides static methods for common validation
-/// checks, such as ensuring that a field is required or that its value
-/// meets a minimum length requirement. These methods return validation
-/// error messages if the checks fail.
 class Validators {
-  /// Validates that a field is required.
-  ///
-  /// This method checks if the provided [value] is null or empty. If it
-  /// is, it returns an error message indicating that the field, identified
-  /// by [label], is required. If the value is present, it returns `null`,
-  /// indicating that the validation passed.
-  ///
-  /// - Parameter value: The value of the field to validate.
-  /// - Parameter label: The label of the field, used in the error message.
-  ///
-  /// - Returns: A [String?] containing the error message if validation fails;
-  /// otherwise, `null`.
-  static String? requiredField(String? value, String label) {
-    if (value == null || value.isEmpty) {
-      return '$label is required';
+  
+  static bool validateRequiredField({
+    required String fieldLabel,
+    required String? fieldValue,
+    required Function(String? errorMessage) setError,
+  }) {
+    if (fieldValue == null || fieldValue.isEmpty) {
+      setError('$fieldLabel is required');
+      return false;
+    } else {
+      setError(null); // No error
+      return true;
     }
-    return null;
   }
 
   /// Validates that a field meets a minimum length requirement.

@@ -84,17 +84,23 @@ class _StewardNumberFieldState extends State<StewardNumberField> {
   /// cleared, and the form state is updated as valid.
   void _validate([String? value]) {
     // Required field validation
-    if (widget.field.validation?.required == true &&
-        (textValue == null || textValue!.isEmpty)) {
-      setState(() {
-        _errorMessage = '${widget.field.label} is required';
-      });
+    bool isValid = Validators.validateRequiredField(
+      fieldLabel: widget.field.label,
+      fieldValue: textValue,
+      setError: (errorMessage) {
+        setState(() {
+          _errorMessage = errorMessage;
+        });
+      },
+    );
+
+    if (!isValid) {
       updateState(false);
       return;
     }
 
     // Numeric field validation
-    if (widget.field.validation?.required == true && textValue != null) {
+    if (textValue != null) {
       final numValue = num.tryParse(textValue!);
       if (numValue == null) {
         setState(() {

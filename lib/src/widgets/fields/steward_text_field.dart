@@ -82,17 +82,20 @@ class _StewardTextFieldWidgetState extends State<StewardTextFieldWidget> {
   /// displayed, and the form state is updated as invalid. Otherwise, the error
   /// message is cleared, and the form state is updated as valid.
   void _validate([String? value]) {
-    if (widget.field.validation?.required == true &&
-        (textValue == null || textValue?.isEmpty == true)) {
-      setState(() {
-        _errorMessage = '${widget.field.label} is required';
-      });
+    // Required field validation
+    bool isValid = Validators.validateRequiredField(
+      fieldLabel: widget.field.label,
+      fieldValue: textValue,
+      setError: (errorMessage) {
+        setState(() {
+          _errorMessage = errorMessage;
+        });
+      },
+    );
+
+    if (!isValid) {
       updateState(false);
-    } else {
-      setState(() {
-        _errorMessage = null;
-      });
-      updateState(true);
+      return;
     }
   }
 
