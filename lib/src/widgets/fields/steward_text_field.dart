@@ -74,9 +74,8 @@ class _StewardTextFieldWidgetState extends State<StewardTextFieldWidget> {
         setState(() {
           textValue = value;
         });
-        // Trigger validation on input change
-        _validate(textValue);
       },
+      onEditingComplete: () => _validate(),
     );
   }
 

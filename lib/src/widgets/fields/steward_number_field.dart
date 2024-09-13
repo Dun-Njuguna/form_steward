@@ -73,6 +73,7 @@ class _StewardNumberFieldState extends State<StewardNumberField> {
         // Update the value of the number field when the user changes the input.
         textValue = value;
       },
+      onEditingComplete: () => _validate(),
     );
   }
 

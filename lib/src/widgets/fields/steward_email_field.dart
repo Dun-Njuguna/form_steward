@@ -72,6 +72,7 @@ class _StewardEmailFieldState extends State<StewardEmailField> {
         // Update the value of the email field when the user changes the input.
         textValue = value;
       },
+      onEditingComplete: () => _validate(),
     );
   }
 
