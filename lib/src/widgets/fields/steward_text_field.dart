@@ -97,6 +97,8 @@ class _StewardTextFieldWidgetState extends State<StewardTextFieldWidget> {
     if (!isValid) {
       updateState(false);
       return;
+    } else {
+      updateState(true);
     }
   }
 
