@@ -6,7 +6,6 @@ import 'package:form_steward/src/widgets/fields/steward_file_picker_field.dart';
 import 'package:form_steward/src/widgets/fields/steward_mobile_field.dart';
 import 'package:form_steward/src/widgets/fields/steward_number_field.dart';
 import 'package:form_steward/src/widgets/fields/steward_text_field.dart';
-import 'package:form_steward/src/widgets/fields/steward_textarea_field.dart';
 import 'package:form_steward/src/widgets/fields/steward_select_field.dart';
 import 'package:form_steward/src/widgets/fields/steward_checkbox_field.dart';
 import 'package:form_steward/src/widgets/fields/steward_radio_field.dart';
@@ -38,7 +37,7 @@ class FormFieldWidgetState extends State<FormFieldWidget> {
   @override
   Widget build(BuildContext context) {
     switch (widget.field.type) {
-      case 'text':
+      case 'text' || 'textarea':
         return StewardTextFieldWidget(
           stepName: widget.stepName,
           field: widget.field,
@@ -65,10 +64,6 @@ class FormFieldWidgetState extends State<FormFieldWidget> {
           field: widget.field,
           validationTriggerNotifier: widget.validationTriggerNotifier,
           formStewardStateNotifier: widget.formStewardStateNotifier,
-        );
-      case 'textarea':
-        return StewardTextareaField(
-          field: widget.field,
         );
       case 'select':
         return StewardSelectField(

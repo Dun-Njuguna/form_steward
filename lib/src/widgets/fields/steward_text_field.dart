@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 
-/// A widget that represents a text field within a form managed by Form Steward.
+/// A widget that represents a text input field within a form managed by Form Steward.
 ///
-/// The [StewardTextFieldWidget] is a customizable text field that works with
-/// the Form Steward state management system to manage field validation and
-/// state updates. This widget listens for validation triggers and updates the
-/// form state accordingly.
+/// The [StewardTextFieldWidget] supports both single-line and multi-line text inputs. It integrates
+/// with the Form Steward state management system to handle field validation and state updates.
+/// This widget listens for validation triggers and updates the form state accordingly.
 ///
-/// The widget receives a [FieldModel] that defines the field's properties such as
-/// label and validation rules. It also receives references to [FormStewardStateNotifier]
-/// to update the form state and [ValidationTriggerNotifier] to trigger field validation.
+/// The widget receives a [FieldModel] to define properties like label and validation rules, and
+/// uses [FormStewardStateNotifier] and [ValidationTriggerNotifier] for state management and
+/// validation.
 class StewardTextFieldWidget extends StatefulWidget {
   /// The model representing the field's properties and validation rules.
   final FieldModel field;
@@ -26,8 +25,8 @@ class StewardTextFieldWidget extends StatefulWidget {
 
   /// Creates an instance of [StewardTextFieldWidget].
   ///
-  /// This widget manages a form field, validates it based on the provided
-  /// [FieldModel], and updates the form state using [FormStewardStateNotifier].
+  /// This widget manages a form field, validates it based on the provided [FieldModel],
+  /// and updates the form state using [FormStewardStateNotifier].
   const StewardTextFieldWidget({
     super.key,
     required this.field,
@@ -64,26 +63,51 @@ class _StewardTextFieldWidgetState extends State<StewardTextFieldWidget> {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      // Displays the label and error message for the text field.
       decoration: InputDecoration(
         labelText: widget.field.label,
         errorText: _errorMessage,
       ),
+      keyboardType: _getKeyboardType(),
+      maxLines: _getMaxLines(),
+      minLines: _getKeyboardType() == TextInputType.multiline ? 3 : 1,
       onChanged: (value) {
-        // Update the value of the text field when the user changes the input.
-        textValue = value;
+        setState(() {
+          textValue = value;
+        });
+        // Trigger validation on input change
+        _validate(textValue);
       },
     );
   }
 
-  /// Validates the field based on the required validation rule.
+  /// Determines the keyboard type based on the field type.
+  TextInputType _getKeyboardType() {
+    return widget.field.type == 'textarea'
+        ? TextInputType.multiline
+        : TextInputType.text;
+  }
+
+  /// Determines the maximum number of lines for the text field.
+  int? _getMaxLines() {
+    return widget.field.type == 'textarea' ? null : 1;
+  }
+
+  /// Validates the field based on its properties.
   ///
-  /// If the field is required but no value is provided, an error message is
-  /// displayed, and the form state is updated as invalid. Otherwise, the error
-  /// message is cleared, and the form state is updated as valid.
+  /// Validations include checking for required fields, minimum and maximum length, and pattern matching.
   void _validate([String? value]) {
-    // Required field validation
-    bool isValid = Validators.validateRequiredField(
+    bool isValid = _validateRequiredField();
+    if (isValid) {
+      isValid = _validateFieldLength();
+    }
+
+    // Update the form state based on validation results
+    updateState(isValid);
+  }
+
+  /// Validates if the field is required and not empty.
+  bool _validateRequiredField() {
+    final isRequired = Validators.validateRequiredField(
       validationRequired: widget.field.validation?.required ?? false,
       fieldLabel: widget.field.label,
       fieldValue: textValue,
@@ -93,13 +117,37 @@ class _StewardTextFieldWidgetState extends State<StewardTextFieldWidget> {
         });
       },
     );
-
-    if (!isValid) {
-      updateState(false);
-      return;
-    } else {
-      updateState(true);
+    if (isRequired) {
+      setState(() {
+        _errorMessage = '${widget.field.label} is required';
+      });
     }
+    return isRequired;
+  }
+
+  /// Validates the field length based on minimum and maximum length constraints.
+  bool _validateFieldLength() {
+    final minLength = widget.field.validation?.minLength;
+    final maxLength = widget.field.validation?.maxLength;
+    final length = textValue?.length ?? 0;
+
+    if (minLength != null && length < minLength) {
+      setState(() {
+        _errorMessage = 'Minimum character length should be $minLength';
+      });
+      return false;
+    }
+    if (maxLength != null && length > maxLength) {
+      setState(() {
+        _errorMessage =
+            'Exceeds allowed maximum character length of $maxLength';
+      });
+      return false;
+    }
+    setState(() {
+      _errorMessage = null;
+    });
+    return true;
   }
 
   /// Updates the form state using [FormStewardStateNotifier].
@@ -108,10 +156,11 @@ class _StewardTextFieldWidgetState extends State<StewardTextFieldWidget> {
   /// value, and the validity status of the field to [FormStewardStateNotifier].
   void updateState(bool isValid) {
     widget.formStewardStateNotifier.updateField(
-        stepName: widget.stepName,
-        fieldName: widget.field.name,
-        value: textValue,
-        isValid: isValid);
+      stepName: widget.stepName,
+      fieldName: widget.field.name,
+      value: textValue,
+      isValid: isValid,
+    );
   }
 
   /// Handles the validation trigger when [ValidationTriggerNotifier] triggers validation.
