@@ -94,8 +94,14 @@ class StepperWidgetState extends State<StepperWidget> {
   @override
   void initState() {
     super.initState();
-    _currentStepNotifier = ValueNotifier(widget.currentStep);
     _scrollController = ScrollController();
+  }
+
+  @override
+  void didChangeDependencies() {
+    // TODO: implement didChangeDependencies
+    super.didChangeDependencies();
+        _currentStepNotifier = ValueNotifier(widget.currentStep);
   }
 
   @override
