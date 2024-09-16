@@ -231,9 +231,9 @@ class StepperWidgetState extends State<StepperWidget> {
                   ElevatedButton(
                     onPressed: () {
                       widget.formStewardNotifier.triggerValidation(
-                          widget.formSteps[widget.currentStep].name);
+                          widget.formSteps[_currentStepNotifier.value].name);
                       if (widget.formStewardStateNotifier.isStepValid(
-                        stepName: widget.formSteps[widget.currentStep].name,
+                        stepName: widget.formSteps[_currentStepNotifier.value].name,
                       )) {
                         details.onStepContinue!();
                       } else {
