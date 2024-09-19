@@ -339,7 +339,7 @@ class AudioRecorderWidgetState extends State<AudioRecorderWidget> {
       _hasRecorded = false; // Update state to reflect no recorded audio.
       _recordedSeconds = 0; // Reset the recorded duration.
     });
-    _updateFormState(null); // Update form state to reflect the deletion.
+    widget.validationTriggerNotifier.value = widget.stepName;
   }
 
   /// Saves the recorded audio file to local storage.
