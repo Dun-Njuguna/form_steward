@@ -33,13 +33,13 @@ class StewardDateField extends StatefulWidget {
   ///
   /// This widget allows for selecting a date or a year and integrates with the form
   /// management system to handle validation and state updates.
-  const StewardDateField({
+  StewardDateField({
     super.key,
-    required this.field,
-    required this.stepName,
-    required this.formStewardStateNotifier,
-    required this.validationTriggerNotifier,
-  });
+    required BaseFieldWidget fieldParams,
+  })  : field = fieldParams.field,
+        stepName = fieldParams.stepName,
+        formStewardStateNotifier = fieldParams.formStewardStateNotifier,
+        validationTriggerNotifier = fieldParams.validationTriggerNotifier;
 
   @override
   StewardDateFieldState createState() => StewardDateFieldState();

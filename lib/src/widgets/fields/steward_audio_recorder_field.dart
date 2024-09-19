@@ -26,13 +26,13 @@ class AudioRecorderWidget extends StatefulWidget {
   /// The [field], [stepName], [formStewardStateNotifier], and
   /// [validationTriggerNotifier] parameters are required to manage the form field,
   /// its state, and validation. These parameters must be provided.
-  const AudioRecorderWidget({
+  AudioRecorderWidget({
     super.key,
-    required this.field,
-    required this.stepName,
-    required this.formStewardStateNotifier,
-    required this.validationTriggerNotifier,
-  });
+    required BaseFieldWidget fieldParams,
+  })  : field = fieldParams.field,
+        stepName = fieldParams.stepName,
+        formStewardStateNotifier = fieldParams.formStewardStateNotifier,
+        validationTriggerNotifier = fieldParams.validationTriggerNotifier;
 
   /// The model that represents the form field associated with this widget.
   ///

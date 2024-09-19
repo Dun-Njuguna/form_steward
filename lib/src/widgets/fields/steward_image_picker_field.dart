@@ -24,13 +24,13 @@ class StewardImagePickerField extends StatefulWidget {
   /// This enables deferred validation to occur at specific points, such as when navigating between steps.
   final ValidationTriggerNotifier validationTriggerNotifier;
 
-  const StewardImagePickerField({
+  StewardImagePickerField({
     super.key,
-    required this.field,
-    required this.stepName,
-    required this.formStewardStateNotifier,
-    required this.validationTriggerNotifier,
-  });
+    required BaseFieldWidget fieldParams,
+  })  : field = fieldParams.field,
+        stepName = fieldParams.stepName,
+        formStewardStateNotifier = fieldParams.formStewardStateNotifier,
+        validationTriggerNotifier = fieldParams.validationTriggerNotifier;
 
   @override
   StewardImagePickerFieldState createState() => StewardImagePickerFieldState();

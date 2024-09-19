@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 import 'package:form_steward/src/utils/interfaces/stepper_navigation.dart';
+import 'package:media_kit/media_kit.dart';
 
 /// A customizable stepper widget that enables navigation through multiple steps.
 /// It supports vertical, horizontal, and tablet layouts.
@@ -94,12 +95,13 @@ class StepperWidgetState extends State<StepperWidget> {
   @override
   void initState() {
     super.initState();
+      MediaKit.ensureInitialized();
+
     _scrollController = ScrollController();
   }
 
   @override
   void didChangeDependencies() {
-    // TODO: implement didChangeDependencies
     super.didChangeDependencies();
         _currentStepNotifier = ValueNotifier(widget.currentStep);
   }

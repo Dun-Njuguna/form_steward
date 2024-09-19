@@ -27,13 +27,13 @@ class StewardTextFieldWidget extends StatefulWidget {
   ///
   /// This widget manages a form field, validates it based on the provided [FieldModel],
   /// and updates the form state using [FormStewardStateNotifier].
-  const StewardTextFieldWidget({
+  StewardTextFieldWidget({
     super.key,
-    required this.field,
-    required this.stepName,
-    required this.formStewardStateNotifier,
-    required this.validationTriggerNotifier,
-  });
+    required BaseFieldWidget fieldParams,
+  })  : field = fieldParams.field,
+        stepName = fieldParams.stepName,
+        formStewardStateNotifier = fieldParams.formStewardStateNotifier,
+        validationTriggerNotifier = fieldParams.validationTriggerNotifier;
 
   @override
   State<StewardTextFieldWidget> createState() => _StewardTextFieldWidgetState();

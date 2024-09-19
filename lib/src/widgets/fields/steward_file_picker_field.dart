@@ -23,13 +23,13 @@ class StewardFilePickerField extends StatefulWidget {
   /// A notifier responsible for triggering validation for the current field.
   final ValidationTriggerNotifier validationTriggerNotifier;
 
-  const StewardFilePickerField({
+  StewardFilePickerField({
     super.key,
-    required this.field,
-    required this.stepName,
-    required this.formStewardStateNotifier,
-    required this.validationTriggerNotifier,
-  });
+    required BaseFieldWidget fieldParams,
+  })  : field = fieldParams.field,
+        stepName = fieldParams.stepName,
+        formStewardStateNotifier = fieldParams.formStewardStateNotifier,
+        validationTriggerNotifier = fieldParams.validationTriggerNotifier;
 
   @override
   StewardFilePickerFieldState createState() => StewardFilePickerFieldState();

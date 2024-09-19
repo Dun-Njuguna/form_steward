@@ -28,13 +28,13 @@ class StewardEmailField extends StatefulWidget {
   ///
   /// This widget manages an email form field, validates it based on the provided
   /// [FieldModel], and updates the form state using [FormStewardStateNotifier].
-  const StewardEmailField({
+  StewardEmailField({
     super.key,
-    required this.field,
-    required this.stepName,
-    required this.formStewardStateNotifier,
-    required this.validationTriggerNotifier,
-  });
+    required BaseFieldWidget fieldParams,
+  })  : field = fieldParams.field,
+        stepName = fieldParams.stepName,
+        formStewardStateNotifier = fieldParams.formStewardStateNotifier,
+        validationTriggerNotifier = fieldParams.validationTriggerNotifier;
 
   @override
   State<StewardEmailField> createState() => _StewardEmailFieldState();

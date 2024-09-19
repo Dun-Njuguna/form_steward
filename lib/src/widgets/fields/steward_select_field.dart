@@ -38,14 +38,14 @@ class StewardSelectField extends StatefulWidget {
   ///
   /// The widget renders a dropdown select field based on the options provided
   /// or fetched asynchronously.
-  const StewardSelectField({
+  StewardSelectField({
     super.key,
-    required this.field,
-    required this.stepName,
-    required this.validationTriggerNotifier,
-    required this.formStewardStateNotifier,
-    this.fetchOptions,
-  });
+    required BaseFieldWidget fieldParams,
+  })  : field = fieldParams.field,
+        stepName = fieldParams.stepName,
+        formStewardStateNotifier = fieldParams.formStewardStateNotifier,
+        validationTriggerNotifier = fieldParams.validationTriggerNotifier,
+        fetchOptions = fieldParams.fetchOptions;
 
   @override
   StewardSelectFieldState createState() => StewardSelectFieldState();

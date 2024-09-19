@@ -31,13 +31,13 @@ class StewardCheckboxField extends StatefulWidget {
   /// Creates an instance of [StewardCheckboxField].
   ///
   /// The widget renders multiple checkbox options based on the [field.options] provided.
-  const StewardCheckboxField({
+  StewardCheckboxField({
     super.key,
-    required this.field,
-    required this.stepName,
-    required this.validationTriggerNotifier,
-    required this.formStewardStateNotifier,
-  });
+    required BaseFieldWidget fieldParams,
+  })  : field = fieldParams.field,
+        stepName = fieldParams.stepName,
+        formStewardStateNotifier = fieldParams.formStewardStateNotifier,
+        validationTriggerNotifier = fieldParams.validationTriggerNotifier;
 
   @override
   StewardCheckboxFieldState createState() => StewardCheckboxFieldState();

@@ -37,13 +37,13 @@ class StewardVideoPickerField extends StatefulWidget {
   final FormStewardStateNotifier formStewardStateNotifier;
   final ValidationTriggerNotifier validationTriggerNotifier;
 
-  const StewardVideoPickerField({
+  StewardVideoPickerField({
     super.key,
-    required this.field,
-    required this.stepName,
-    required this.formStewardStateNotifier,
-    required this.validationTriggerNotifier,
-  });
+    required BaseFieldWidget fieldParams,
+  })  : field = fieldParams.field,
+        stepName = fieldParams.stepName,
+        formStewardStateNotifier = fieldParams.formStewardStateNotifier,
+        validationTriggerNotifier = fieldParams.validationTriggerNotifier;
 
   @override
   StewardVideoPickerFieldState createState() => StewardVideoPickerFieldState();

@@ -28,13 +28,13 @@ class StewardRadioField extends StatefulWidget {
   ///
   /// This widget manages a group of radio buttons based on the provided [FieldModel].
   /// It updates the form state and performs validation according to the model's rules.
-  const StewardRadioField({
+  StewardRadioField({
     super.key,
-    required this.field,
-    required this.stepName,
-    required this.formStewardStateNotifier,
-    required this.validationTriggerNotifier,
-  });
+    required BaseFieldWidget fieldParams,
+  })  : field = fieldParams.field,
+        stepName = fieldParams.stepName,
+        formStewardStateNotifier = fieldParams.formStewardStateNotifier,
+        validationTriggerNotifier = fieldParams.validationTriggerNotifier;
 
   @override
   StewardRadioFieldState createState() => StewardRadioFieldState();
