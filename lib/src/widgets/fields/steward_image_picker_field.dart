@@ -115,7 +115,6 @@ class StewardImagePickerFieldState extends State<StewardImagePickerField> {
                     const Icon(
                       Icons.camera_alt_outlined, // Camera icon for picking or capturing an image
                       size: 32,
-                      color: Colors.grey,
                     ),
                   ],
                 ),
