@@ -7,29 +7,25 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:audioplayers/audioplayers.dart';
+import 'package:media_kit/media_kit.dart';
 
-/// A widget that provides audio recording and playback functionality within a form.
+/// A widget that allows users to record audio within a form field.
 ///
-/// The `AudioRecorderWidget` allows users to record audio, play back the recorded audio,
-/// and manage the audio file as part of a form field. It integrates with [FormStewardStateNotifier]
-/// and [ValidationTriggerNotifier] to handle form state and validation.
+/// The [AudioRecorderWidget] is designed to be integrated within a form
+/// managed by [FormStewardStateNotifier] and validated through
+/// [ValidationTriggerNotifier]. It provides the ability to start, stop,
+/// and delete audio recordings, and it updates the form state with the
+/// recorded file path.
 ///
-/// This widget supports recording audio, displaying recording duration, playing back
-/// recorded audio, and deleting the audio file. It ensures that the audio file is managed
-/// correctly and integrates with the form's validation system to update the form state based on
-/// the presence and validity of the recorded audio file.
+/// This widget is typically used in forms where an audio recording is a
+/// required or optional field, and it ensures that the recording process
+/// is handled smoothly within the form flow.
 class AudioRecorderWidget extends StatefulWidget {
   /// Creates an [AudioRecorderWidget].
   ///
-  /// The [field], [stepName], [formStewardStateNotifier], and [validationTriggerNotifier]
-  /// parameters are required to set up the widget.
-  ///
-  /// - [field] is used to provide the configuration for the form field and to handle
-  ///   validation.
-  /// - [stepName] indicates the name of the current step in the form.
-  /// - [formStewardStateNotifier] is used to update and manage the form state.
-  /// - [validationTriggerNotifier] is used to trigger validation for the form field.
+  /// The [field], [stepName], [formStewardStateNotifier], and
+  /// [validationTriggerNotifier] parameters are required to manage the form field,
+  /// its state, and validation. These parameters must be provided.
   const AudioRecorderWidget({
     super.key,
     required this.field,
@@ -38,407 +34,376 @@ class AudioRecorderWidget extends StatefulWidget {
     required this.validationTriggerNotifier,
   });
 
-  /// The [FieldModel] used for validation and configuration of the form field.
+  /// The model that represents the form field associated with this widget.
   ///
-  /// This model contains information about the form field and its validation rules.
+  /// This [FieldModel] provides the necessary information for the field,
+  /// such as its name, label, and validation rules.
   final FieldModel field;
 
-  /// The name of the current step in the form.
+  /// The name of the form step that this widget is part of.
   ///
-  /// This string identifies the step in the form process where this widget is used.
+  /// The [stepName] is used to identify which step of the form the widget
+  /// belongs to, helping to manage the state and validation specific to that
+  /// step.
   final String stepName;
 
-  /// The [FormStewardStateNotifier] used to manage and update the form state.
+  /// The notifier used to manage the form state for the associated step.
   ///
-  /// This notifier helps in updating the state of the form based on user interactions
-  /// and form field values.
+  /// The [formStewardStateNotifier] is responsible for updating the form's
+  /// state, including the values of fields and their validation status.
   final FormStewardStateNotifier formStewardStateNotifier;
 
-  /// The [ValidationTriggerNotifier] used to trigger validation of the form field.
+  /// The notifier used to trigger validation for this widget.
   ///
-  /// This notifier is used to trigger validation when needed, based on user actions
-  /// or other triggers within the form.
+  /// The [validationTriggerNotifier] listens for changes in the validation
+  /// state and triggers validation checks for the form fields, ensuring that
+  /// the form remains in a valid state as the user interacts with it.
   final ValidationTriggerNotifier validationTriggerNotifier;
 
   @override
   AudioRecorderWidgetState createState() => AudioRecorderWidgetState();
 }
 
-/// The state class for [AudioRecorderWidget].
-///
-/// This class manages the internal state of the [AudioRecorderWidget], including
-/// audio recording and playback functionality. It handles user interactions, such as
-/// starting and stopping recordings, playing back recorded audio, and updating
-/// the UI based on the state of the audio recording and playback.
-///
-/// The state class uses [AudioRecorderHelper] for recording audio, [AudioPlayer]
-/// for playback, and manages various UI-related states like recording status,
-/// playback progress, and error messages.
 class AudioRecorderWidgetState extends State<AudioRecorderWidget> {
-  /// Helper instance for managing audio recording.
+  /// An instance of [AudioRecorderHelper] used to manage the audio recording process.
+  ///
+  /// [_audioRecorderHelper] provides methods to start, stop, and manage
+  /// audio recordings, ensuring that the recording process is handled correctly
+  /// within the widget.
   final AudioRecorderHelper _audioRecorderHelper = AudioRecorderHelper();
 
-  /// Indicates whether the audio recording is currently in progress.
+  /// A flag indicating whether the audio recording is currently in progress.
+  ///
+  /// [_isRecording] is `true` when the user is actively recording audio, and `false`
+  /// when recording is stopped or has not yet started.
   bool _isRecording = false;
 
-  /// Indicates whether an audio recording has been completed.
+  /// A flag indicating whether an audio recording has been completed.
+  ///
+  /// [_hasRecorded] is `true` if an audio recording has been successfully completed
+  /// and saved. It is used to manage the state of the widget and determine whether
+  /// to display playback controls or allow the user to delete the recording.
   bool _hasRecorded = false;
 
   /// The recorded audio file.
+  ///
+  /// [_audioFile] holds the recorded audio as an [XFile] object once the recording
+  /// has been completed. It is used to play back the recording or to upload the file
+  /// as part of the form submission.
   XFile? _audioFile;
 
-  /// Timer used to track the duration of the recording.
+  /// A timer used to track the duration of the recording session.
+  ///
+  /// [_timer] is used to update the recording time display and to ensure that the
+  /// recording is stopped after a certain duration if needed.
   Timer? _timer;
 
-  /// The number of seconds recorded so far.
+  /// The number of seconds that have been recorded so far.
+  ///
+  /// [_recordedSeconds] tracks the total duration of the recording in seconds. This
+  /// is used to display the recording time to the user.
   int _recordedSeconds = 0;
 
-  /// The audio player used for playback of the recorded audio.
-  AudioPlayer? _audioPlayer;
+  /// An instance of the [Player] used for playing back the recorded audio.
+  ///
+  /// [_player] is responsible for handling the playback of the recorded audio file,
+  /// allowing the user to listen to the recording before saving or re-recording.
+  Player? _player; // MediaKit Player
 
-  /// Indicates whether the audio is currently being played.
+  /// A flag indicating whether the recorded audio is currently being played back.
+  ///
+  /// [_isPlaying] is `true` when the audio is being played and `false` when playback
+  /// is paused or stopped.
   bool _isPlaying = false;
 
   /// The total duration of the recorded audio.
+  ///
+  /// [_audioDuration] represents the length of the audio file and is used to display
+  /// the duration during playback or to provide playback controls.
   Duration _audioDuration = Duration.zero;
 
-  /// The current playback position of the audio.
+  /// The current playback position within the audio file.
+  ///
+  /// [_currentPosition] tracks the current position of the audio playback, allowing
+  /// the user to seek within the recording and providing an accurate progress display.
   Duration _currentPosition = Duration.zero;
 
-  /// Stores any error messages for field validity.
+  /// A message indicating any errors that occurred during the recording or playback process.
+  ///
+  /// [_errorMessage] stores error messages related to the recording or playback process,
+  /// providing feedback to the user if something goes wrong.
   String? _errorMessage;
 
+  /// Called when this widget is inserted into the widget tree.
+  ///
+  /// The [initState] method is responsible for initializing state variables
+  /// and setting up any necessary listeners or controllers. In this case,
+  /// it adds a listener to the [ValidationTriggerNotifier] to handle validation
+  /// events and initializes the audio player for playback functionality.
   @override
   void initState() {
     super.initState();
-    // Adds a listener to the [validationTriggerNotifier] to listen for validation triggers.
     widget.validationTriggerNotifier.addListener(_onValidationTrigger);
+    _initializePlayer();
   }
 
+  /// Called when this widget is removed from the widget tree permanently.
+  ///
+  /// The [dispose] method is responsible for cleaning up any resources used by
+  /// this widget, such as timers, listeners, or controllers. In this case, it
+  /// cancels any active timers, disposes of the audio player, and removes the
+  /// validation listener to prevent memory leaks.
   @override
   void dispose() {
-    // Cancels the timer if it's running.
     _timer?.cancel();
-
-    // Disposes of the audio player to release resources.
-    _audioPlayer?.dispose();
-
-    // Removes the listener from [validationTriggerNotifier].
+    _player?.dispose();
     widget.validationTriggerNotifier.removeListener(_onValidationTrigger);
-
     super.dispose();
   }
 
-  /// Initializes the audio player and sets up listeners for playback events.
+  /// Initializes the audio player for managing playback of recorded audio files.
   ///
-  /// This method creates an instance of [AudioPlayer], and sets up listeners
-  /// to handle changes in the audio duration, playback position, and completion
-  /// of playback. It updates the state to reflect these changes:
-  ///
-  /// - [onDurationChanged]: Updates the total duration of the audio.
-  /// - [onPositionChanged]: Updates the current playback position.
-  /// - [onPlayerComplete]: Resets the playback state and position when the audio finishes.
+  /// [_initializePlayer] sets up the [Player] instance to handle audio playback
+  /// by listening to the position, duration, and completion events of the audio
+  /// file. These events are used to update the UI with the current playback state,
+  /// such as the current position within the audio file, the total duration, and
+  /// whether the playback has completed.
   Future<void> _initializePlayer() async {
-    _audioPlayer = AudioPlayer();
+    _player = Player();
 
-    // Listener for changes in the total duration of the audio.
-    _audioPlayer?.onDurationChanged.listen((Duration duration) {
+    // Listen to changes in the playback position and update the UI accordingly.
+    _player?.stream.position.listen((position) {
       setState(() {
-        _audioDuration = duration; // Sets the total duration of the audio.
+        _currentPosition = position;
       });
     });
 
-    // Listener for changes in the current playback position.
-    _audioPlayer?.onPositionChanged.listen((Duration position) {
+    // Listen to changes in the audio duration and update the UI accordingly.
+    _player?.stream.duration.listen((duration) {
       setState(() {
-        _currentPosition = position; // Sets the current playback position.
+        _audioDuration = duration;
       });
     });
 
-    // Listener for when playback is completed.
-    _audioPlayer?.onPlayerComplete.listen((event) {
+    // Listen for the completion of audio playback and reset the playback state.
+    _player?.stream.completed.listen((_) {
       setState(() {
-        _isPlaying =
-            false; // Resets the playback state when the audio finishes.
-        _currentPosition =
-            Duration.zero; // Resets the current position to the start.
+        _isPlaying = false;
+        _currentPosition = Duration.zero;
       });
     });
   }
 
-  /// Loads the audio file for playback.
+  /// Loads the recorded audio file into the player for playback.
   ///
-  /// This method checks if an audio file is available (`_audioFile` is not null),
-  /// and if so, sets the source URL of the [AudioPlayer] to the path of the
-  /// recorded audio file.
-  ///
-  /// **Note:** This method assumes that `_audioPlayer` is already initialized.
-  ///
-  /// **Usage:** This method is typically called before starting playback to ensure
-  /// the audio file is ready to be played.
+  /// The [_loadAudioFile] method checks if there is an existing audio file.
+  /// If a file exists, it opens the file using the [Player] instance for playback.
   Future<void> _loadAudioFile() async {
     if (_audioFile != null) {
-      await _audioPlayer?.setSourceUrl(
-          _audioFile!.path); // Set the source URL of the audio player.
+      await _player?.open(Media(_audioFile!.path));
     }
   }
 
-  /// Handles audio playback by starting or pausing the playback.
+  /// Handles the playback and pausing of the audio file.
   ///
-  /// This method first checks if an audio file is available. If an audio file is
-  /// present and the audio player is not initialized, it initializes the player.
-  /// If the audio is not currently playing, it loads the audio file and starts
-  /// playback. If the audio is already playing, it pauses the playback.
-  ///
-  /// **Note:** This method toggles the playback state between playing and paused.
-  ///
-  /// **Usage:** This method is called when the user interacts with playback controls,
-  /// such as play or pause buttons.
+  /// The [_handlePlayback] method manages the audio playback state. If there is no
+  /// audio file, the method returns early. If the audio is not currently playing,
+  /// it loads the audio file (if not already loaded) and starts playback.
+  /// If the audio is already playing, it pauses the playback. The method updates
+  /// the [_isPlaying] state to reflect the current playback status.
   Future<void> _handlePlayback() async {
-    if (_audioFile == null) {
-      return; // Exit if no audio file is available.
-    }
-
-    if (_audioPlayer == null) {
-      await _initializePlayer(); // Initialize the audio player if not already done.
-    }
+    if (_audioFile == null) return;
 
     if (!_isPlaying) {
-      await _loadAudioFile(); // Load the audio file before starting playback.
-      await _audioPlayer
-          ?.play(DeviceFileSource(_audioFile!.path)); // Start playback.
+      await _loadAudioFile();
+      _player?.play();
       setState(() {
-        _isPlaying =
-            true; // Update the state to reflect that playback is active.
+        _isPlaying = true;
       });
     } else {
-      await _audioPlayer?.pause(); // Pause playback if it is currently playing.
+      _player?.pause();
       setState(() {
-        _isPlaying =
-            false; // Update the state to reflect that playback is paused.
+        _isPlaying = false;
       });
     }
   }
 
-  /// Stops audio playback and resets the playback state.
+  /// Stops the playback of the audio file and resets the playback state.
   ///
-  /// This method stops the current audio playback if the [AudioPlayer] instance is
-  /// not null. It also updates the state to indicate that playback has stopped and
-  /// resets the current playback position to zero.
-  ///
-  /// **Usage:** This method is called when the user stops the audio playback, either
-  /// manually or through a specific control in the UI.
+  /// The [_stopPlayback] method stops the audio playback and resets the current
+  /// playback position to the beginning. It also updates the [_isPlaying] state
+  /// to `false` and resets [_currentPosition] to [Duration.zero].
   Future<void> _stopPlayback() async {
-    if (_audioPlayer != null) {
-      await _audioPlayer?.stop(); // Stop playback.
-      setState(() {
-        _isPlaying = false; // Update state to indicate playback has stopped.
-        _currentPosition =
-            Duration.zero; // Reset the playback position to zero.
-      });
-    }
-  }
-
-  /// Starts recording and initializes the timer for recording duration.
-  ///
-  /// This method first checks if the necessary permissions are granted by calling
-  /// `_requestPermission`. If permissions are granted, it starts recording using
-  /// `_audioRecorderHelper` and initializes a timer to track the duration of the
-  /// recording. The state is updated to indicate that recording has started.
-  ///
-  /// **Usage:** This method is called when the user initiates a recording action,
-  /// typically through a record button in the UI.
-  Future<void> _startRecording() async {
-    bool permissionGranted = await _requestPermission(context);
-    if (!permissionGranted) return; // Exit if permission is not granted.
-
-    await _audioRecorderHelper.startRecording(); // Start recording.
+    await _player?.stop();
     setState(() {
-      _isRecording = true; // Update state to indicate recording has started.
-      _recordedSeconds = 0; // Reset the recorded duration to zero.
-      _startTimer(); // Start the timer to track recording duration.
+      _isPlaying = false;
+      _currentPosition = Duration.zero;
     });
   }
 
-  /// Stops the recording, saves the recorded file, and stops the timer.
+  /// Starts recording audio if the necessary permissions are granted.
   ///
-  /// This method cancels the recording timer and stops the recording using
-  /// `_audioRecorderHelper`. If a recorded file is obtained, it saves the file and
-  /// updates the form state with the file's path. The state is then updated to reflect
-  /// that recording has stopped and a new audio file has been recorded.
+  /// The [_startRecording] method first checks for necessary permissions using
+  /// [_requestPermission]. If permission is granted, it initiates the recording
+  /// process via [_audioRecorderHelper]. The recording state is updated to reflect
+  /// that recording has started, the recorded seconds counter is reset, and a timer
+  /// is started to track the recording duration.
+  Future<void> _startRecording() async {
+    bool permissionGranted = await _requestPermission(context);
+    if (!permissionGranted) return;
+
+    await _audioRecorderHelper.startRecording();
+    setState(() {
+      _isRecording = true;
+      _recordedSeconds = 0;
+      _startTimer();
+    });
+  }
+
+  /// Stops the current recording session and saves the recorded audio file.
   ///
-  /// **Usage:** This method is called when the user stops a recording, typically
-  /// through a stop button in the UI.
+  /// The [_stopRecording] method stops the recording process by cancelling the
+  /// ongoing timer and calling [AudioRecorderHelper.stopRecording] to finalize the
+  /// recording. If a valid recorded file is returned, it saves the file using
+  /// [_saveRecordedFile] and updates the form state with the saved file path.
+  /// The method then updates the widget's state to reflect that recording has stopped,
+  /// the file has been saved, and the recording session is no longer active.
   Future<void> _stopRecording() async {
-    _timer?.cancel(); // Cancel the recording timer.
-    final XFile? recordedFile = await _audioRecorderHelper
-        .stopRecording(); // Stop recording and get the recorded file.
+    _timer?.cancel();
+    final XFile? recordedFile = await _audioRecorderHelper.stopRecording();
     if (recordedFile != null && mounted) {
-      final savedFilePath =
-          await _saveRecordedFile(recordedFile); // Save the recorded file.
+      final savedFilePath = await _saveRecordedFile(recordedFile);
       if (savedFilePath != null) {
-        _updateFormState(
-            savedFilePath); // Update form state with the file path.
+        _updateFormState(savedFilePath);
       }
       setState(() {
-        _audioFile = recordedFile; // Update state with the recorded file.
-        _hasRecorded = true; // Indicate that a recording has been made.
-        _isRecording = false; // Update state to indicate recording has stopped.
+        _audioFile = recordedFile;
+        _hasRecorded = true;
+        _isRecording = false;
       });
     }
   }
 
-  /// Starts a timer to update the recording duration every second.
+  /// Starts a timer to track the duration of the recording session.
   ///
-  /// This method initializes a periodic timer that updates the `_recordedSeconds`
-  /// state every second to reflect the duration of the ongoing recording. The timer
-  /// is only active while the widget is mounted.
-  ///
-  /// **Usage:** This method is called when recording starts to keep track of the
+  /// The [_startTimer] method initializes a periodic [Timer] that increments the
+  /// [_recordedSeconds] state every second. The timer continues to run until the
+  /// recording is stopped. The state is updated on each tick to reflect the current
   /// recording duration.
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
-          _recordedSeconds++; // Increment recorded duration every second.
+          _recordedSeconds++;
         });
       }
     });
   }
 
-  /// Formats the given duration in seconds into a MM:SS string format.
+  /// Formats the recorded duration into a string representation of minutes and seconds.
   ///
-  /// This method converts the provided duration in seconds into a string formatted
-  /// as "MM:SS". It ensures that minutes and seconds are displayed as two-digit
-  /// numbers, with leading zeros if necessary.
-  ///
-  /// **Parameters:**
-  /// - `seconds`: The duration in seconds to be formatted.
-  ///
-  /// **Returns:** A string representing the formatted duration.
-  ///
-  /// **Usage:** This method is used to display the recording duration in a user-friendly
-  /// format in the UI.
+  /// The [_formatDuration] method takes the total recorded duration in seconds and
+  /// converts it into a string format of `MM:SS` (minutes and seconds). It ensures that
+  /// both the minutes and seconds are always displayed with two digits by padding with
+  /// leading zeros if necessary.
   String _formatDuration(int seconds) {
     final minutes = seconds ~/ 60;
     final remainingSeconds = seconds % 60;
     return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 
-  /// Deletes the recorded audio file and resets relevant state.
+  /// Deletes the recorded audio file and resets the related state.
   ///
-  /// This method clears the recorded audio file and resets the recording-related
-  /// state variables. It also updates the form state to reflect that the recording
-  /// has been deleted.
-  ///
-  /// **Usage:** This method is called when the user decides to delete the recorded
-  /// audio file, typically through a delete button in the UI.
+  /// The [_deleteAudio] method clears the [_audioFile], resets the [_hasRecorded]
+  /// flag to false, and sets [_recordedSeconds] back to zero. After deleting the
+  /// audio, it triggers validation by updating the [validationTriggerNotifier] with
+  /// the current step name, ensuring that the form is revalidated in response to the
+  /// deletion.
   void _deleteAudio() {
     setState(() {
-      _audioFile = null; // Clear the audio file.
-      _hasRecorded = false; // Update state to reflect no recorded audio.
-      _recordedSeconds = 0; // Reset the recorded duration.
+      _audioFile = null;
+      _hasRecorded = false;
+      _recordedSeconds = 0;
     });
     widget.validationTriggerNotifier.value = widget.stepName;
   }
 
-  /// Saves the recorded audio file to local storage.
+  /// Saves the recorded audio file to the designated directory.
   ///
-  /// This method saves the provided recorded audio file to a directory in local
-  /// storage. The file is saved with a timestamp to ensure a unique filename.
-  ///
-  /// **Parameters:**
-  /// - `recordedFile`: The `XFile` instance representing the recorded audio file.
-  ///
-  /// **Returns:** A `Future<String?>` that resolves to the file path where the audio
-  /// file was saved. Returns `null` if there was an error or the directory does not exist.
-  ///
-  /// **Usage:** This method is called to persist the recorded audio file to local storage
-  /// and obtain the file path for further use.
+  /// The [_saveRecordedFile] method saves the provided [recordedFile] to a directory
+  /// obtained via [_getSaveDirectory]. It constructs a unique file path based on the
+  /// current timestamp and saves the audio file in `.m4a` format. If the file is saved
+  /// successfully, the method returns the file path; otherwise, it returns null and logs
+  /// an error message.
   Future<String?> _saveRecordedFile(XFile recordedFile) async {
-    Directory? directory =
-        await _getSaveDirectory(); // Get the directory to save the file
+    Directory? directory = await _getSaveDirectory();
     if (directory != null && await directory.exists()) {
       final filePath =
-          '${directory.path}/${DateTime.now().millisecondsSinceEpoch}.m4a'; // Create a unique file path
+          '${directory.path}/${DateTime.now().millisecondsSinceEpoch}.m4a';
       try {
-        await recordedFile.saveTo(filePath); // Save the recorded file
-        return filePath; // Return the file path if successful
+        await recordedFile.saveTo(filePath);
+        return filePath;
       } catch (e) {
-        print("Error saving audio file: $e"); // Log the error if saving fails
+        print("Error saving audio file: $e");
       }
     }
-    return null; // Return null if directory does not exist or an error occurs
+    return null;
   }
 
-  /// Gets the directory where the audio file will be saved.
+  /// Retrieves the appropriate directory for saving the recorded audio file.
   ///
-  /// This method determines the appropriate directory for saving the audio file based
-  /// on the platform.
-  ///
-  /// **Returns:** A `Future<Directory?>` representing the directory where the audio
-  /// file will be saved. Returns `null` for web platforms.
-  ///
-  /// **Usage:** This method is used to obtain the correct directory for saving files
-  /// depending on the platform (Android, iOS, or other).
+  /// The [_getSaveDirectory] method returns a [Directory] where the recorded audio
+  /// files should be saved based on the platform:
+  /// - On Android, it saves to the `/storage/emulated/0/Music` directory.
+  /// - On iOS, it saves to the application documents directory.
+  /// - On other platforms, it defaults to the downloads directory.
+  /// - On web, it returns null since directory access is not supported.
   Future<Directory?> _getSaveDirectory() async {
-    if (kIsWeb) return null; // Return null for web platforms
+    if (kIsWeb) return null;
     if (Platform.isAndroid) {
-      return Directory('/storage/emulated/0/Music'); // Directory for Android
+      return Directory('/storage/emulated/0/Music');
     }
     if (Platform.isIOS) {
-      return await getApplicationDocumentsDirectory(); // Directory for iOS
+      return await getApplicationDocumentsDirectory();
     }
-    return await getDownloadsDirectory(); // Directory for other platforms
+    return await getDownloadsDirectory();
   }
 
-  /// Requests permission to access storage.
+  /// Requests storage permission on Android and iOS platforms.
   ///
-  /// This method requests storage permission from the user if it is not already granted.
-  /// For Android and iOS platforms, it handles permission status and displays a dialog
-  /// if permission is permanently denied.
-  ///
-  /// **Parameters:**
-  /// - `context`: The `BuildContext` to show the permission dialog if needed.
-  ///
-  /// **Returns:** A `Future<bool>` that resolves to `true` if permission is granted
-  /// or `false` if permission is denied and not granted permanently.
-  ///
-  /// **Usage:** This method is called before accessing storage to ensure that the
-  /// application has the necessary permissions.
+  /// The [_requestPermission] method checks whether storage permissions have been
+  /// granted on Android or iOS. If permissions are granted, it returns true; otherwise,
+  /// it requests the necessary permissions. If permission is denied and permanently
+  /// denied, it displays a dialog to inform the user. On other platforms, the method
+  /// returns true by default since permissions are not required.
   Future<bool> _requestPermission(BuildContext context) async {
     if (Platform.isAndroid || Platform.isIOS) {
-      var status =
-          await Permission.storage.status; // Check current permission status
+      var status = await Permission.storage.status;
       if (status.isGranted) {
-        return true; // Return true if permission is already granted
+        return true;
       }
 
       if (status.isDenied) {
-        final result = await Permission.storage.request(); // Request permission
+        final result = await Permission.storage.request();
         if (result.isGranted) {
-          return true; // Return true if permission is granted after request
+          return true;
         }
         if (result.isPermanentlyDenied && context.mounted) {
-          _showPermissionDialog(
-              context); // Show dialog if permission is permanently denied
+          _showPermissionDialog(context);
         }
       }
     }
-    return true; // Return true if permission is not required for the current platform
+    return true;
   }
 
-  /// Shows a dialog to inform the user to enable permissions.
+  /// Displays a dialog to inform the user about the required storage permission.
   ///
-  /// This method displays an `AlertDialog` that informs the user they need to grant
-  /// storage permissions to save recorded audio files. The dialog provides options
-  /// to open the app settings or cancel the action.
-  ///
-  /// **Parameters:**
-  /// - `context`: The `BuildContext` used to show the dialog.
-  ///
-  /// **Usage:** This method is called when storage permissions are permanently denied,
-  /// prompting the user to navigate to app settings and grant the necessary permissions.
+  /// The [_showPermissionDialog] method creates an [AlertDialog] that informs the user
+  /// that storage permission is required to save the recorded audio file. It provides two
+  /// options:
+  /// - **Open Settings**: Navigates the user to the app settings to grant the required
+  ///   permission.
+  /// - **Cancel**: Closes the dialog without taking any action.
   void _showPermissionDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -451,13 +416,13 @@ class AudioRecorderWidgetState extends State<AudioRecorderWidget> {
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-                openAppSettings(); // Open app settings for permissions
+                Navigator.of(context).pop();
+                openAppSettings();
               },
               child: const Text("Open Settings"),
             ),
             TextButton(
-              onPressed: () => Navigator.of(context).pop(), // Close the dialog
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text("Cancel"),
             ),
           ],
@@ -466,25 +431,18 @@ class AudioRecorderWidgetState extends State<AudioRecorderWidget> {
     );
   }
 
-  /// Updates the form state with the audio file's path and validity.
+  /// Updates the form state with the provided file path.
   ///
-  /// This method updates the form state with the path of the recorded audio file
-  /// and its validity based on whether the file path is non-null and whether the
-  /// field is required. If the file path is null and the field is required, an
-  /// error message is set; otherwise, it is cleared.
-  ///
-  /// **Parameters:**
-  /// - `filePath`: The file path of the recorded audio. Can be `null` if no file is recorded.
-  ///
-  /// **Usage:** This method is called to update the form's state with the new file path
-  /// and to indicate whether the field is valid or invalid based on the presence of a file.
+  /// The [_updateFormState] method checks if the provided [filePath] is not null or if
+  /// the field is not marked as required. If valid, it clears any existing error message.
+  /// It then updates the [formStewardStateNotifier] with the current step name, field
+  /// name, file path, and validity status, allowing the form to reflect the new state.
   void _updateFormState(String? filePath) {
-    bool isValid = filePath != null ||
-        widget.field.validation?.required !=
-            true; // Determine if the field is valid
+    bool isValid =
+        filePath != null || widget.field.validation?.required != true;
     if (isValid) {
       setState(() {
-        _errorMessage = null; // Clear error message if valid
+        _errorMessage = null;
       });
     }
     widget.formStewardStateNotifier.updateField(
@@ -492,43 +450,44 @@ class AudioRecorderWidgetState extends State<AudioRecorderWidget> {
       fieldName: widget.field.name,
       value: filePath,
       isValid: isValid,
-    ); // Update the form state notifier with the new value and validity
+    );
   }
 
-  /// Listens for validation triggers from [ValidationTriggerNotifier] and validates the field.
+  /// Listens for validation triggers from the [validationTriggerNotifier].
   ///
-  /// This method is invoked when a validation trigger occurs. It checks if the current
-  /// step name matches the trigger value. If they match, it initiates validation by
-  /// calling the `_validate` method.
-  ///
-  /// **Usage:** This method is used to respond to validation triggers and ensure that
-  /// the field is validated according to the current validation state.
+  /// The [_onValidationTrigger] method checks if the current validation trigger's value
+  /// matches the [stepName] of the widget. If they match, it calls the [_validate] method
+  /// to perform validation on the audio recording.
   void _onValidationTrigger() {
     if (widget.validationTriggerNotifier.value == widget.stepName) {
-      _validate(); // Validate when triggered
+      _validate();
     }
   }
 
-  /// Validates the field based on whether it's required and if an audio file is selected.
+  /// Validates the audio recording based on the required field status.
   ///
-  /// This method checks if the field has a required validation rule and if an audio
-  /// file has been recorded. If the field is required and no audio file is present,
-  /// it sets an error message indicating that the field is required. Otherwise, it
-  /// updates the form state with the audio file's path.
-  ///
-  /// **Usage:** This method is used to ensure that required fields have been filled out
-  /// correctly and to update the form state with the current audio file's path.
+  /// The [_validate] method checks if the associated field is marked as required. If the
+  /// field is required and no audio file has been recorded, it sets an error message
+  /// indicating that the audio is required. If the validation passes, it calls the
+  /// [_updateFormState] method with the path of the recorded audio file.
   void _validate() {
     if (widget.field.validation?.required == true && _audioFile == null) {
       setState(() {
-        _errorMessage =
-            '${widget.field.label} is required.'; // Set validation error message
+        _errorMessage = '${widget.field.label} is required.';
       });
     } else {
-      _updateFormState(_audioFile?.path); // Update form state
+      _updateFormState(_audioFile?.path);
     }
   }
 
+  /// Builds the widget's UI.
+  ///
+  /// The [build] method constructs the UI for the audio recorder, including:
+  /// - A label for the audio field.
+  /// - An audio container for recording controls and playback.
+  /// - An error message if validation fails.
+  ///
+  /// Returns a [Column] widget that organizes the elements vertically.
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -545,19 +504,32 @@ class AudioRecorderWidgetState extends State<AudioRecorderWidget> {
     );
   }
 
-  /// Builds the label for the audio field.
+  /// Builds the label for the audio recording field.
+  ///
+  /// The [_buildLabel] method returns a [Text] widget with the label "Audio".
+  /// It uses the body medium text style from the current theme context.
+  ///
+  /// Returns a [Text] widget displaying the audio label.
   Widget _buildLabel(BuildContext context) {
     return Text(
-      "Audio", // Displays the label for the field
+      "Audio",
       style: Theme.of(context).textTheme.bodyMedium,
     );
   }
 
-  /// Builds the container that holds the audio controls and playback information.
+  /// Constructs the container for the audio recording controls.
+  ///
+  /// The [_buildAudioContainer] method creates a [Container] widget that includes:
+  /// - A grey border and rounded corners.
+  /// - Padding for internal spacing.
+  /// - A column containing audio controls, and optionally shows recording progress
+  ///   or playback slider depending on the current state (recording or playing).
+  ///
+  /// Returns a [Container] widget that houses the audio controls and additional UI elements.
   Widget _buildAudioContainer() {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey), // Border styling
+        border: Border.all(color: Colors.grey),
         borderRadius: BorderRadius.circular(8),
       ),
       padding: const EdgeInsets.only(top: 8, bottom: 8, left: 24, right: 8),
@@ -571,7 +543,13 @@ class AudioRecorderWidgetState extends State<AudioRecorderWidget> {
     );
   }
 
-  /// Builds the row of audio controls (record, stop, play, delete).
+  /// Constructs the row of audio controls for playback and recording.
+  ///
+  /// The [_buildAudioControls] method returns a [Row] widget containing:
+  /// - A [Text] widget that displays the current recording status or duration.
+  /// - Buttons for playback, deletion, and starting/stopping recording.
+  ///
+  /// Returns a [Row] widget that aligns audio control elements horizontally.
   Widget _buildAudioControls() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -596,7 +574,13 @@ class AudioRecorderWidgetState extends State<AudioRecorderWidget> {
     );
   }
 
-  /// Builds the playback button, showing play/pause based on the playback state.
+  /// Builds the playback button for audio playback controls.
+  ///
+  /// The [_buildPlaybackButton] method returns an [IconButton] that toggles
+  /// between play and pause icons based on the current playback state.
+  /// If no audio has been recorded, it returns an empty container.
+  ///
+  /// Returns an [IconButton] widget for playback control or an empty [Container] if not applicable.
   Widget _buildPlaybackButton() {
     return _hasRecorded
         ? IconButton(
@@ -607,7 +591,13 @@ class AudioRecorderWidgetState extends State<AudioRecorderWidget> {
         : Container();
   }
 
-  /// Builds the delete button for removing the recorded audio.
+  /// Builds the delete button for removing recorded audio.
+  ///
+  /// The [_buildDeleteButton] method returns an [IconButton] for deleting
+  /// the recorded audio file. If no audio has been recorded, it returns
+  /// an empty container.
+  ///
+  /// Returns an [IconButton] widget for deletion control or an empty [Container] if not applicable.
   Widget _buildDeleteButton() {
     return _hasRecorded
         ? IconButton(
@@ -617,7 +607,13 @@ class AudioRecorderWidgetState extends State<AudioRecorderWidget> {
         : Container();
   }
 
-  /// Builds the button for starting or stopping recording based on the recording state.
+  /// Builds the recording button to start or stop audio recording.
+  ///
+  /// The [_buildRecordingButton] method returns an [IconButton] that toggles
+  /// between a stop icon when recording is active and a microphone icon when
+  /// idle.
+  ///
+  /// Returns an [IconButton] widget for recording control.
   Widget _buildRecordingButton() {
     return _isRecording
         ? IconButton(
@@ -630,30 +626,54 @@ class AudioRecorderWidgetState extends State<AudioRecorderWidget> {
           );
   }
 
-  /// Builds a linear progress indicator for recording progress.
+  /// Builds a linear progress indicator to show recording progress.
+  ///
+  /// The [_buildRecordingProgress] method returns a [LinearProgressIndicator]
+  /// widget, indicating that recording is in progress.
+  ///
+  /// Returns a [Padding] widget containing a [LinearProgressIndicator].
   Widget _buildRecordingProgress() {
     return const Padding(
       padding: EdgeInsets.all(8.0),
-      child: LinearProgressIndicator(), // Represents recording progress.
+      child: LinearProgressIndicator(),
     );
   }
 
-  /// Builds a slider for playback progress.
+  /// Builds a slider for controlling audio playback position.
+  ///
+  /// The [_buildPlaybackSlider] method returns a [Slider] that allows users
+  /// to seek through the audio track based on the current playback position.
+  /// It ensures the slider value is clamped within the valid range.
+  ///
+  /// Returns a [Slider] widget for playback position control.
   Widget _buildPlaybackSlider() {
+    final double max = _audioDuration.inSeconds.toDouble();
+    final double value = _currentPosition.inSeconds.toDouble();
+
+    // Ensure the value is within the valid range
+    final double clampedValue = value.clamp(0.0, max);
+
     return Slider(
-      value: _currentPosition.inSeconds.toDouble(),
-      max: _audioDuration.inSeconds.toDouble(),
-      onChanged: (double value) async {
-        final newPosition = Duration(seconds: value.toInt());
-        await _audioPlayer?.seek(newPosition); // Seek to the new position
-        setState(() {
-          _currentPosition = newPosition;
-        });
-      },
+      value: clampedValue,
+      max: max,
+      onChanged: (max > 0)
+          ? (double value) async {
+              final newPosition = Duration(seconds: value.toInt());
+              await _player?.seek(newPosition);
+              setState(() {
+                _currentPosition = newPosition;
+              });
+            }
+          : null,
     );
   }
 
-  /// Builds the error message widget if an error message is present.
+  /// Builds an error message widget for displaying validation errors.
+  ///
+  /// The [_buildErrorMessage] method returns a [Text] widget that shows
+  /// an error message in red, if present.
+  ///
+  /// Returns a [Text] widget for displaying the error message.
   Widget _buildErrorMessage() {
     return Text(
       _errorMessage!,
