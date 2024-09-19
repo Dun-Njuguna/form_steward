@@ -1,7 +1,7 @@
 name: form_steward
 description: "form_steward is a dynamic form builder package that allows you to create and manage multi-step forms in Flutter based on JSON configuration. It supports custom form validation, stepper navigation, and flexible form field types, making it a powerful tool for building complex forms with ease."
 version: 0.0.1
-homepage:
+homepage: https://flutter.dev
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -21,7 +21,10 @@ dependencies:
   permission_handler: ^11.3.1
   record: ^5.1.2
   uuid: ^4.5.0
-  
+  media_kit: ^1.1.11 
+  media_kit_video: ^1.2.5 
+  media_kit_libs_video: ^1.0.5 
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -38,7 +41,7 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-
+  uses-material-design: true
   # To add assets to your package, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
