@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
+import 'package:form_steward/src/utils/helpers.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 
 /// A widget that represents an international mobile number input field within a form managed by Form Steward.
@@ -43,7 +44,8 @@ class StewardMobileFieldState extends State<StewardMobileField> {
   String? _errorMessage;
   String phoneValue = '';
   bool isPhoneNumberValid = true;
-  PhoneNumber phoneNumber = PhoneNumber(isoCode: 'KE', dialCode: '+254'); // Default ISO code
+  PhoneNumber phoneNumber =
+      PhoneNumber(isoCode: 'KE', dialCode: '+254'); // Default ISO code
 
   @override
   void initState() {
@@ -64,44 +66,50 @@ class StewardMobileFieldState extends State<StewardMobileField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        InternationalPhoneNumberInput(
-          // Displays the label and error message for the mobile field.
-          inputDecoration: InputDecoration(
-            labelText: widget.field.label,
-            errorText: _errorMessage,
+        Container(
+          padding: appEqualPadding,
+          decoration: BoxDecoration(
+            border: Border.all(
+                width: 1.0, color: borderColor(_errorMessage, context)),
+            borderRadius: appBorderRadius,
           ),
-          // Automatically format the phone number as the user types.
-          onInputChanged: (PhoneNumber number) {
-            phoneNumber = number;
-            phoneValue = number.phoneNumber ?? '';
-            _updateFormState(); // Update form state on input change.
-          },
-          onInputValidated: (bool isValid) {
-            // Handle validation errors.
-            setState(() {
-              if (!isValid && phoneValue.isNotEmpty) {
-                _errorMessage = 'Invalid ${widget.field.label}';
-              } else {
-                _errorMessage = null;
-              }
-            });
-            isPhoneNumberValid = isValid;
-            _updateFormState(isValid: isValid);
-          },
-          keyboardType: TextInputType.phone,
-          selectorConfig: const SelectorConfig(
-            selectorType: PhoneInputSelectorType.BOTTOM_SHEET,
-          ),
-          initialValue: phoneNumber,
-        ),
-        if (_errorMessage != null && phoneValue.isEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 4.0),
-            child: Text(
-              _errorMessage!,
-              style: const TextStyle(color: Colors.red),
+          child: InternationalPhoneNumberInput(
+            // Displays the label and error message for the mobile field.
+            inputBorder: customeOutlineInputBorder(
+              context,
+              _errorMessage,
             ),
+            inputDecoration: InputDecoration(
+              border: InputBorder.none,
+              labelText: widget.field.label,
+              errorText: _errorMessage,
+            ),
+            // Automatically format the phone number as the user types.
+            onInputChanged: (PhoneNumber number) {
+              phoneNumber = number;
+              phoneValue = number.phoneNumber ?? '';
+              _updateFormState(); // Update form state on input change.
+            },
+            onInputValidated: (bool isValid) {
+              // Handle validation errors.
+              setState(() {
+                if (!isValid && phoneValue.isNotEmpty) {
+                  _errorMessage = 'Invalid ${widget.field.label}';
+                } else {
+                  _errorMessage = null;
+                }
+              });
+              isPhoneNumberValid = isValid;
+              _updateFormState(isValid: isValid);
+            },
+            keyboardType: TextInputType.phone,
+            selectorConfig: const SelectorConfig(
+              selectorType: PhoneInputSelectorType.BOTTOM_SHEET,
+            ),
+            initialValue: phoneNumber,
           ),
+        ),
+        displayErrorMessage(_errorMessage, context),
       ],
     );
   }
@@ -133,7 +141,7 @@ class StewardMobileFieldState extends State<StewardMobileField> {
   ///
   /// Displays an error message if validation fails and updates the form state accordingly.
   void _validatePhoneNumber() {
-    if(!isPhoneNumberValid) return;
+    if (!isPhoneNumberValid) return;
     // Required field validation
     bool isValid = Validators.validateRequiredField(
       validationRequired: widget.field.validation?.required ?? false,

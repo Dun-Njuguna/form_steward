@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
+import 'package:form_steward/src/utils/steward_base_text_field.dart';
 
 /// A widget that represents a text input field within a form managed by Form Steward.
 ///
@@ -62,14 +63,10 @@ class _StewardTextFieldWidgetState extends State<StewardTextFieldWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      decoration: InputDecoration(
-        labelText: widget.field.label,
-        errorText: _errorMessage,
-      ),
+    return StewardBaseTextField(
+      label: widget.field.label,
       keyboardType: _getKeyboardType(),
-      maxLines: _getMaxLines(),
-      minLines: _getKeyboardType() == TextInputType.multiline ? 3 : 1,
+      errorMessage: _errorMessage,
       onChanged: (value) {
         setState(() {
           textValue = value;

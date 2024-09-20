@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 import 'package:form_steward/src/models/option_model.dart';
+import 'package:form_steward/src/utils/helpers.dart';
 
 /// A widget that represents a radio button group within a form managed by Form Steward.
 ///
@@ -66,34 +67,46 @@ class StewardRadioFieldState extends State<StewardRadioField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Display the field's label as the title.
-        Text(
-          widget.field.label,
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
-        // Display the radio buttons.
-        ...?widget.field.options?.map<Widget>((OptionModel option) {
-          return RadioListTile<int>(
-            title: Text(option.value),
-            value: option.id,
-            groupValue: _selectedValue,
-            onChanged: (value) {
-              setState(() {
-                _selectedValue = value;
-                _validate();
-              });
-            },
-          );
-        }),
-        // Display the error message if validation fails.
-        if (_errorMessage != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Text(
-              _errorMessage!,
-              style: const TextStyle(color: Colors.red),
-            ),
+        Container(
+          decoration: customeBoxDecoration(_errorMessage, context),
+          padding: appEqualPadding,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Display the field's label as the title.
+              Text(
+                widget.field.label,
+                style: TextStyle(
+                    color: _errorMessage != null
+                        ? Theme.of(context).colorScheme.error
+                        : null),
+              ),
+              // Display the radio buttons.
+              ...?widget.field.options?.map<Widget>((OptionModel option) {
+                return RadioListTile<int>(
+                  title: Text(
+                    option.value,
+                    style: TextStyle(
+                      color: _errorMessage != null
+                          ? Theme.of(context).colorScheme.error
+                          : null,
+                    ),
+                  ),
+                  value: option.id,
+                  groupValue: _selectedValue,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedValue = value;
+                      _validate();
+                    });
+                  },
+                );
+              }),
+            ],
           ),
+        ),
+        // Display the error message if validation fails.
+        displayErrorMessage(_errorMessage, context),
       ],
     );
   }

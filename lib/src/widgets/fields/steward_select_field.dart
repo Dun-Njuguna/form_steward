@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 import 'package:form_steward/src/models/option_model.dart';
+import 'package:form_steward/src/utils/helpers.dart';
 
 /// A custom form DropDown field for selecting an option from a list.
 ///
@@ -91,41 +92,29 @@ class StewardSelectFieldState extends State<StewardSelectField> {
   @override
   Widget build(BuildContext context) {
     final bool hasError = _errorMessage != null;
-    const Color errorColor = Colors.red;
+    final Color errorColor = Theme.of(context).colorScheme.error;
     final Color normalColor = Theme.of(context).colorScheme.primary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel(hasError, errorColor),
-        const SizedBox(height: 8),
         _buildSelectionContainer(hasError, errorColor, normalColor),
         if (hasError) _buildErrorMessage(errorColor),
       ],
     );
   }
 
-  /// Builds the label for the select field.
-  Widget _buildLabel(bool hasError, Color errorColor) {
-    return Text(
-      widget.field.label,
-      style: hasError ? TextStyle(color: errorColor) : null,
-    );
-  }
-
   /// Builds the container that represents the select field.
-  Widget _buildSelectionContainer(bool hasError, Color errorColor, Color normalColor) {
+  Widget _buildSelectionContainer(
+      bool hasError, Color errorColor, Color normalColor) {
     return GestureDetector(
       onTap: _showSelectionDialog,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: hasError ? errorColor : normalColor,
-            width: hasError ? 2 : 1,
-          ),
-          borderRadius: BorderRadius.circular(8),
+        decoration: customeBoxDecoration(
+          _errorMessage,
+          context,
         ),
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -147,13 +136,7 @@ class StewardSelectFieldState extends State<StewardSelectField> {
 
   /// Builds the error message display.
   Widget _buildErrorMessage(Color errorColor) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8.0),
-      child: Text(
-        _errorMessage!,
-        style: TextStyle(color: errorColor, fontSize: 12),
-      ),
-    );
+    return displayErrorMessage(_errorMessage, context);
   }
 
   /// Validates the current selection.
@@ -263,14 +246,17 @@ class SelectionDialogState extends State<SelectionDialog> {
   Widget _buildSearchToggle() {
     return AnimatedCrossFade(
       duration: const Duration(milliseconds: 300),
-      crossFadeState: _showSearch ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+      crossFadeState:
+          _showSearch ? CrossFadeState.showSecond : CrossFadeState.showFirst,
       firstChild: IconButton(
-        icon: Icon(Icons.search, size: 22, color: Theme.of(context).primaryColor.withOpacity(0.7)),
+        icon: Icon(Icons.search,
+            size: 22, color: Theme.of(context).primaryColor.withOpacity(0.7)),
         onPressed: _toggleSearch,
         splashRadius: 20,
       ),
       secondChild: IconButton(
-        icon: Icon(Icons.close, size: 22, color: Theme.of(context).primaryColor.withOpacity(0.7)),
+        icon: Icon(Icons.close,
+            size: 22, color: Theme.of(context).primaryColor.withOpacity(0.7)),
         onPressed: _toggleSearch,
         splashRadius: 20,
       ),
@@ -368,9 +354,8 @@ class SelectionDialogState extends State<SelectionDialog> {
   /// Filters the options based on the search query.
   List<OptionModel> _filterOptions(List<OptionModel> options) {
     return options
-        .where((option) => option.value
-            .toLowerCase()
-            .contains(_searchQuery.toLowerCase()))
+        .where((option) =>
+            option.value.toLowerCase().contains(_searchQuery.toLowerCase()))
         .toList();
   }
 }

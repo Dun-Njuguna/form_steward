@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
+import 'package:form_steward/src/utils/helpers.dart';
 
 /// A widget that represents a date input field within a form managed by Form Steward.
 ///
 /// The [StewardDateField] widget allows users to select a date or year. It integrates with
-/// the Form Steward state management system to handle validation and state updates. The widget 
+/// the Form Steward state management system to handle validation and state updates. The widget
 /// listens for validation triggers and updates the form state accordingly.
 ///
 /// ## Parameters:
-/// 
+///
 /// - [field]: The [FieldModel] that defines the properties and validation rules for this field.
 /// - [stepName]: The name of the step that this field belongs to.
 /// - [formStewardStateNotifier]: The instance of [FormStewardStateNotifier] that manages the form state.
 /// - [validationTriggerNotifier]: The instance of [ValidationTriggerNotifier] that listens for validation triggers.
 ///
-/// The widget supports selecting either a specific date or just a year depending on the validation 
+/// The widget supports selecting either a specific date or just a year depending on the validation
 /// properties in [field].
 class StewardDateField extends StatefulWidget {
   /// The model representing the field's properties and validation rules.
@@ -69,7 +70,8 @@ class StewardDateFieldState extends State<StewardDateField> {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      decoration: InputDecoration(
+      decoration: customInputDecoration(
+        context,
         labelText: widget.field.label,
         errorText: _errorMessage,
       ),
@@ -145,9 +147,10 @@ class StewardDateFieldState extends State<StewardDateField> {
                               margin: const EdgeInsets.all(8.0),
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                  color: _selectedDate?.startsWith('$year') == true
-                                      ? buttonColor
-                                      : Colors.grey,
+                                  color:
+                                      _selectedDate?.startsWith('$year') == true
+                                          ? buttonColor
+                                          : Colors.grey,
                                   width: 1.0,
                                 ),
                                 borderRadius: BorderRadius.circular(8),
@@ -156,7 +159,8 @@ class StewardDateFieldState extends State<StewardDateField> {
                                 child: Text(
                                   year.toString(),
                                   style: TextStyle(
-                                    color: _selectedDate?.startsWith('$year') == true
+                                    color: _selectedDate?.startsWith('$year') ==
+                                            true
                                         ? buttonColor
                                         : Colors.black,
                                   ),

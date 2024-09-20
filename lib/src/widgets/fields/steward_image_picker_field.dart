@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 import 'package:form_steward/src/models/file_result_model.dart';
 import 'package:form_steward/src/utils/file_picker/steward_file_picker_helper.dart';
+import 'package:form_steward/src/utils/helpers.dart';
 
 class StewardImagePickerField extends StatefulWidget {
   /// The [FieldModel] containing metadata about the field, such as:
@@ -122,14 +123,7 @@ class StewardImagePickerFieldState extends State<StewardImagePickerField> {
             ],
           ),
         ),
-        if (_errorMessage != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              _errorMessage!, // Displays the error message, if any
-              style: const TextStyle(color: Colors.red),
-            ),
-          ),
+        displayErrorMessage(_errorMessage, context),
       ],
     );
   }

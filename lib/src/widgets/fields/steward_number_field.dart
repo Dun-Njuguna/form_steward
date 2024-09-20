@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
+import 'package:form_steward/src/utils/steward_base_text_field.dart';
 
 /// A widget that represents a number input field within a form managed by Form Steward.
 ///
@@ -62,16 +63,14 @@ class _StewardNumberFieldState extends State<StewardNumberField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      // Displays the label and error message for the number field.
-      decoration: InputDecoration(
-        labelText: widget.field.label,
-        errorText: _errorMessage,
-      ),
+    return StewardBaseTextField(
+      label: widget.field.label,
       keyboardType: TextInputType.number,
+      errorMessage: _errorMessage,
       onChanged: (value) {
-        // Update the value of the number field when the user changes the input.
-        textValue = value;
+        setState(() {
+          textValue = value;
+        });
       },
       onEditingComplete: () => _validate(),
     );

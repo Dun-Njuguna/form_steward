@@ -1,14 +1,15 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:form_steward/form_steward.dart'; 
-import 'package:form_steward/src/models/file_result_model.dart'; 
+import 'package:form_steward/form_steward.dart';
+import 'package:form_steward/src/models/file_result_model.dart';
 import 'package:form_steward/src/utils/file_picker/steward_file_picker_helper.dart';
+import 'package:form_steward/src/utils/helpers.dart';
 
-/// A custom widget for picking files in a form. This widget is part of the 
-/// form system managed by FormSteward. It includes validation logic and 
+/// A custom widget for picking files in a form. This widget is part of the
+/// form system managed by FormSteward. It includes validation logic and
 /// updates the form state when a file is selected.
-/// 
-/// The [StewardFilePickerField] works in conjunction with a field model and 
+///
+/// The [StewardFilePickerField] works in conjunction with a field model and
 /// notifiers for state management and validation triggers.
 class StewardFilePickerField extends StatefulWidget {
   /// The field model containing metadata such as label, name, and validation rules.
@@ -36,8 +37,8 @@ class StewardFilePickerField extends StatefulWidget {
 }
 
 /// State class for [StewardFilePickerField].
-/// 
-/// This class handles the internal state of the file picker widget, 
+///
+/// This class handles the internal state of the file picker widget,
 /// including managing the selected file, validation, and UI rendering.
 class StewardFilePickerFieldState extends State<StewardFilePickerField> {
   /// The file selected by the user, wrapped in a [StewardFilePickerResult] object.
@@ -74,19 +75,20 @@ class StewardFilePickerFieldState extends State<StewardFilePickerField> {
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: 8),
-        
+
         // GestureDetector to handle file selection.
         GestureDetector(
           onTap: () async {
             // Opens file picker dialog and assigns the result to _pickedFile.
             final pickedFile = await _filePickerHelper.pickFile();
-            if (pickedFile.file == null) return; // If no file is selected, return early.
+            if (pickedFile.file == null)
+              return; // If no file is selected, return early.
             setState(() {
               _pickedFile = pickedFile;
             });
             _validate(); // Validate the field after file selection.
           },
-          
+
           // Display container for the file picker.
           child: Container(
             height: 200,
@@ -104,14 +106,7 @@ class StewardFilePickerFieldState extends State<StewardFilePickerField> {
         ),
 
         // Display error message if validation fails.
-        if (_errorMessage != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              _errorMessage!,
-              style: const TextStyle(color: Colors.red),
-            ),
-          ),
+        displayErrorMessage(_errorMessage, context),
       ],
     );
   }
@@ -140,7 +135,7 @@ class StewardFilePickerFieldState extends State<StewardFilePickerField> {
   }
 
   /// Builds the preview widget to show the selected file.
-  /// This will either display an image preview if the selected file is an image 
+  /// This will either display an image preview if the selected file is an image
   /// or the file name if it's a non-image file.
   Widget _buildFilePreview() {
     final file = _pickedFile!.file;
@@ -160,7 +155,8 @@ class StewardFilePickerFieldState extends State<StewardFilePickerField> {
             child: IconButton(
               tooltip: "Update selection",
               icon: const Icon(
-                Icons.edit, // Icon to allow editing/replacing the selected file.
+                Icons
+                    .edit, // Icon to allow editing/replacing the selected file.
                 color: Colors.red,
               ),
               onPressed: () async {

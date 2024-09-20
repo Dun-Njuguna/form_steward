@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 import 'package:form_steward/src/utils/audio_recorder/audio_recorder_helper.dart';
+import 'package:form_steward/src/utils/helpers.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -675,9 +676,7 @@ class AudioRecorderWidgetState extends State<AudioRecorderWidget> {
   ///
   /// Returns a [Text] widget for displaying the error message.
   Widget _buildErrorMessage() {
-    return Text(
-      _errorMessage!,
-      style: const TextStyle(color: Colors.red),
-    );
+    // Display the error message if validation fails.
+    return displayErrorMessage(_errorMessage, context);
   }
 }

@@ -1,6 +1,7 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
+import 'package:form_steward/src/utils/steward_base_text_field.dart';
 
 /// A widget that represents an email field within a form managed by Form Steward.
 ///
@@ -63,15 +64,14 @@ class _StewardEmailFieldState extends State<StewardEmailField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      decoration: InputDecoration(
-        labelText: widget.field.label,
-        errorText: _errorMessage,
-      ),
+    return StewardBaseTextField(
+      label: widget.field.label,
       keyboardType: TextInputType.emailAddress,
+      errorMessage: _errorMessage,
       onChanged: (value) {
-        // Update the value of the email field when the user changes the input.
-        textValue = value;
+        setState(() {
+          textValue = value;
+        });
       },
       onEditingComplete: () => _validate(),
     );
@@ -101,7 +101,6 @@ class _StewardEmailFieldState extends State<StewardEmailField> {
     }
     // Email pattern validation
     if (widget.field.validation?.pattern != null && textValue != null) {
-      
       if (!EmailValidator.validate(textValue!)) {
         setState(() {
           _errorMessage = 'Invalid ${widget.field.label}';

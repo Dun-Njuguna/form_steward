@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 import 'package:form_steward/src/utils/file_picker/steward_file_picker_helper.dart';
+import 'package:form_steward/src/utils/helpers.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -453,12 +454,7 @@ class StewardVideoPickerFieldState extends State<StewardVideoPickerField> {
             height: 8.0), // Add space between label and video container
         _buildVideoContainer(), // Build the container for video controls
         if (_errorMessage != null) ...[
-          const SizedBox(height: 8.0), // Space before error message
-          Text(
-            _errorMessage!,
-            style: const TextStyle(
-                color: Colors.red), // Display error message in red
-          ),
+          displayErrorMessage(_errorMessage, context),
         ],
       ],
     );

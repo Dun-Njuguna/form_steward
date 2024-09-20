@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 import 'package:form_steward/src/models/option_model.dart';
+import 'package:form_steward/src/utils/helpers.dart';
 
 /// A widget that represents a checkbox field within a form managed by Form Steward.
 ///
@@ -69,19 +70,28 @@ class StewardCheckboxFieldState extends State<StewardCheckboxField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 3.0),
-          child: Text(widget.field.label),
-        ),
-        ..._buildCheckboxes(),
-        if (_errorMessage != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Text(
-              _errorMessage!,
-              style: const TextStyle(color: Colors.red),
-            ),
+        Container(
+          decoration: customeBoxDecoration(_errorMessage, context),
+          padding: appEqualPadding,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 3.0),
+                child: Text(
+                  widget.field.label,
+                  style: TextStyle(
+                      color: _errorMessage != null
+                          ? Theme.of(context).colorScheme.error
+                          : null),
+                ),
+              ),
+              ..._buildCheckboxes(),
+            ],
           ),
+        ),
+        // Display the error message if validation fails.
+        displayErrorMessage(_errorMessage, context),
       ],
     );
   }
@@ -93,7 +103,13 @@ class StewardCheckboxFieldState extends State<StewardCheckboxField> {
   List<Widget> _buildCheckboxes() {
     return (widget.field.options ?? []).map<Widget>((OptionModel option) {
       return CheckboxListTile(
-        title: Text(option.value),
+        title: Text(
+          option.value,
+          style: TextStyle(
+              color: _errorMessage != null
+                  ? Theme.of(context).colorScheme.error
+                  : null),
+        ),
         value: _selectedValues.contains(option.id),
         onChanged: (isChecked) {
           setState(() {
@@ -119,7 +135,7 @@ class StewardCheckboxFieldState extends State<StewardCheckboxField> {
   void _validate() {
     if (widget.field.validation?.required == true && _selectedValues.isEmpty) {
       setState(() {
-        _errorMessage = 'Selection is required';
+        _errorMessage = 'Selection required';
       });
     } else {
       setState(() {
