@@ -81,7 +81,7 @@ class FieldWidgetFactory {
     if (widgetBuilder != null) {
       return widgetBuilder(params);
     }
-    return const SizedBox.shrink();
+    return const SizedBox(height: 0,);
   }
 }
 

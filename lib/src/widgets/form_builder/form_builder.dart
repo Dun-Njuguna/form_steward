@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:form_steward/src/state/form_steward_state_notifier.dart';
 import 'package:form_steward/src/state/validation_trigger_notifier.dart';
 import 'package:media_kit/media_kit.dart';
-import '../models/form_step_model.dart';
+import '../../models/form_step_model.dart';
 import 'form_field_widget.dart';
 
 /// A widget that builds a dynamic form based on a list of form steps.

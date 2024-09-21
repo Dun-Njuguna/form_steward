@@ -46,9 +46,9 @@ export 'src/models/field_model.dart';
 export 'src/models/validation_model.dart';
 
 // Exporting widgets
-export 'src/widgets/stepper_widget.dart';
-export 'src/widgets/form_field_widget.dart';
-export 'src/widgets/form_builder.dart';
+export 'src/widgets/form_builder/stepper_widget.dart';
+export 'src/widgets/form_builder/form_field_widget.dart';
+export 'src/widgets/form_builder/form_builder.dart';
 
 // Exporting utils
 export 'src/utils/json_parser.dart';

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 import 'package:form_steward/src/utils/interfaces/stepper_navigation.dart';
-import 'package:form_steward/src/widgets/vertical_stepper.dart';
+import 'package:form_steward/src/widgets/steppers/horizontal_stepper.dart';
+import 'package:form_steward/src/widgets/steppers/vertical_stepper.dart';
 
 /// A customizable stepper widget that enables navigation through multiple steps.
 /// It supports vertical, horizontal, and tablet layouts.
@@ -131,11 +132,11 @@ class StepperWidgetState extends State<StepperWidget> {
         return;
       }
 
-      _scrollController.animateTo(
-        itemOffset,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      // _scrollController.animateTo(
+      //   itemOffset,
+      //   duration: const Duration(milliseconds: 300),
+      //   curve: Curves.easeInOut,
+      // );
     });
   }
 
@@ -158,7 +159,7 @@ class StepperWidgetState extends State<StepperWidget> {
       position != null
           ? _currentStepNotifier.value = position
           : _currentStepNotifier.value++;
-      _scrollToActiveStep();
+      // _scrollToActiveStep();
     });
     widget.onNextStep(previousStepData: data);
   }
@@ -174,7 +175,7 @@ class StepperWidgetState extends State<StepperWidget> {
         position != null
             ? _currentStepNotifier.value = position
             : _currentStepNotifier.value--;
-        _scrollToActiveStep();
+        // _scrollToActiveStep();
       });
     }
   }
@@ -194,70 +195,21 @@ class StepperWidgetState extends State<StepperWidget> {
           formStewardNotifier: widget.formStewardNotifier,
           formStewardStateNotifier: widget.formStewardStateNotifier,
           onSubmit: (formData){
-            widget.onSubmit(formData: formData);
+            widget.onNextStep(previousStepData: formData);
           },
         );
       case StewardStepperType.horizontal:
-        return _buildHorizontalStepper(context);
+        return HorizontalStepper(
+                    formSteps: widget.formSteps,
+          formStewardNotifier: widget.formStewardNotifier,
+          formStewardStateNotifier: widget.formStewardStateNotifier,
+          onSubmit: (formData){
+            widget.onSubmit(formData: formData);
+          },
+        );
       case StewardStepperType.tablet:
         return _buildTabletStepper(context);
     }
-  }
-
- 
-  /// Builds the horizontal layout for the stepper.
-  Widget _buildHorizontalStepper(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(top: 50.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-              widget.formSteps[_currentStepNotifier.value].title,
-            ),
-          ),
-          Expanded(
-            child: IndexedStack(
-              index: _currentStepNotifier.value,
-              children: widget.stepWidgets,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                if (_currentStepNotifier.value > 0)
-                  ElevatedButton(
-                    onPressed: () {
-                      _goToPreviousStep(null);
-                    },
-                    child: const Text('Back'),
-                  )
-                else
-                  const Spacer(flex: 3),
-                Text(
-                    '${_currentStepNotifier.value + 1}/${widget.stepWidgets.length}'),
-                if (_currentStepNotifier.value == 0) const Spacer(flex: 2),
-                _currentStepNotifier.value == widget.stepWidgets.length - 1
-                    ? ElevatedButton(
-                        onPressed: () => _submitForm(),
-                        child: const Text('Submit'),
-                      )
-                    : ElevatedButton(
-                        onPressed: () {
-                          _goToNextStep(null);
-                        },
-                        child: const Text('Next'),
-                      ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   /// Builds the tablet layout for the stepper.
@@ -367,33 +319,4 @@ class StepperWidgetState extends State<StepperWidget> {
     );
   }
 
-  /// Builds a list of [Step] widgets for the stepper.
-  ///
-  /// Creates a list of [Step] widgets where each step corresponds to a
-  /// [FormStepModel] and its index in the stepper. The state of each step
-  /// is determined by its index relative to the current step.
-  List<Step> _buildSteps() {
-    return List<Step>.generate(widget.stepWidgets.length, (int index) {
-      return Step(
-        title: Text(widget.formSteps[index].title),
-        content: widget.stepWidgets[index],
-        isActive: index == _currentStepNotifier.value,
-        state: _getStepState(index),
-      );
-    });
-  }
-
-  /// Determines the state of a step based on its index and the current step.
-  ///
-  /// [index] is the index of the step being evaluated.
-  /// Returns the state of the step as a [StepState].
-  StepState _getStepState(int index) {
-    if (index == _currentStepNotifier.value) {
-      return StepState.editing;
-    } else if (index < _currentStepNotifier.value) {
-      return StepState.complete;
-    } else {
-      return StepState.disabled;
-    }
-  }
 }
