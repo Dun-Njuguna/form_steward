@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/src/state/form_steward_state_notifier.dart';
 import 'package:form_steward/src/state/validation_trigger_notifier.dart';
+import 'package:media_kit/media_kit.dart';
 import '../models/form_step_model.dart';
 import 'form_field_widget.dart';
 
@@ -10,7 +11,7 @@ import 'form_field_widget.dart';
 /// dynamically generates a form. Each form step is represented by a
 /// [FormStepModel], which includes a title and a list of fields. The
 /// widget uses [FormFieldWidget] to render each field within the form steps.
-class FormBuilder extends StatelessWidget {
+class FormBuilder extends StatefulWidget {
   /// The list of form steps to be built into the form.
   ///
   /// The [steps] parameter is a list of [FormStepModel] instances that define
@@ -37,14 +38,26 @@ class FormBuilder extends StatelessWidget {
   });
 
   @override
+  State<FormBuilder> createState() => _FormBuilderState();
+}
+
+class _FormBuilderState extends State<FormBuilder> {
+
+  @override
+  void initState() {
+    super.initState();
+    MediaKit.ensureInitialized();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
-      children: steps.map((step) {
+      children: widget.steps.map((step) {
         // Initialize step validity
         final Map<String, bool> fieldsValidity = {
           for (var field in step.fields) field.name: true
         };
-        formStewardStateNotifier.initializeStepValidity(
+        widget.formStewardStateNotifier.initializeStepValidity(
           stepValidity: {
             step.name: fieldsValidity,
           },
@@ -58,8 +71,8 @@ class FormBuilder extends StatelessWidget {
                 child: FormFieldWidget(
                   field: field,
                   stepName: step.name,
-                  validationTriggerNotifier: validationTriggerNotifier,
-                  formStewardStateNotifier: formStewardStateNotifier,
+                  validationTriggerNotifier: widget.validationTriggerNotifier,
+                  formStewardStateNotifier: widget.formStewardStateNotifier,
                 ),
               );
             }),

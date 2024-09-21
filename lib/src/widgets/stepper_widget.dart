@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 import 'package:form_steward/src/utils/interfaces/stepper_navigation.dart';
-import 'package:media_kit/media_kit.dart';
+import 'package:form_steward/src/widgets/vertical_stepper.dart';
 
 /// A customizable stepper widget that enables navigation through multiple steps.
 /// It supports vertical, horizontal, and tablet layouts.
@@ -95,8 +95,6 @@ class StepperWidgetState extends State<StepperWidget> {
   @override
   void initState() {
     super.initState();
-      MediaKit.ensureInitialized();
-
     _scrollController = ScrollController();
   }
 
@@ -191,7 +189,14 @@ class StepperWidgetState extends State<StepperWidget> {
   Widget build(BuildContext context) {
     switch (widget.stepperType) {
       case StewardStepperType.vertical:
-        return _buildVerticalStepper();
+        return VerticalStepper(
+          formSteps: widget.formSteps,
+          formStewardNotifier: widget.formStewardNotifier,
+          formStewardStateNotifier: widget.formStewardStateNotifier,
+          onSubmit: (formData){
+            widget.onSubmit(formData: formData);
+          },
+        );
       case StewardStepperType.horizontal:
         return _buildHorizontalStepper(context);
       case StewardStepperType.tablet:
@@ -199,71 +204,7 @@ class StepperWidgetState extends State<StepperWidget> {
     }
   }
 
-  /// Builds the vertical layout for the stepper.
-  Widget _buildVerticalStepper() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Stepper(
-            currentStep: _currentStepNotifier.value,
-            onStepTapped: (int index) {
-              if (_currentStepNotifier.value > index) {
-                _goToPreviousStep(index);
-              } else {
-                _currentStepNotifier.value == widget.stepWidgets.length - 1
-                    ? _submitForm()
-                    : _goToNextStep(index);
-              }
-            },
-            onStepContinue:
-                _currentStepNotifier.value == widget.stepWidgets.length - 1
-                    ? () => _submitForm()
-                    : () {
-                        _goToNextStep(null);
-                      },
-            onStepCancel: () {
-              _currentStepNotifier.value > 0 ? _goToPreviousStep(null) : null;
-            },
-            steps: _buildSteps(),
-            controlsBuilder: (BuildContext context, ControlsDetails details) {
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  if (_currentStepNotifier.value > 0)
-                    ElevatedButton(
-                      onPressed: details.onStepCancel,
-                      child: const Text('Back'),
-                    ),
-                  const Spacer(flex: 5),
-                  ElevatedButton(
-                    onPressed: () {
-                      widget.formStewardNotifier.triggerValidation(
-                          widget.formSteps[_currentStepNotifier.value].name);
-                      if (widget.formStewardStateNotifier.isStepValid(
-                        stepName: widget.formSteps[_currentStepNotifier.value].name,
-                      )) {
-                        details.onStepContinue!();
-                      } else {
-                        widget.formStewardNotifier.reset();
-                      }
-                    },
-                    child: Text(
-                      _currentStepNotifier.value ==
-                              widget.stepWidgets.length - 1
-                          ? 'Submit'
-                          : 'Next',
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
+ 
   /// Builds the horizontal layout for the stepper.
   Widget _buildHorizontalStepper(BuildContext context) {
     return Container(
