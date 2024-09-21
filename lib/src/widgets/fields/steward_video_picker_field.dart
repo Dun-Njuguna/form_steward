@@ -73,6 +73,8 @@ class StewardVideoPickerFieldState extends State<StewardVideoPickerField> {
   /// An error message to display when validation fails or an error occurs.
   String? _errorMessage;
 
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -80,15 +82,25 @@ class StewardVideoPickerFieldState extends State<StewardVideoPickerField> {
     // Initialize the video player and controller.
     _player = Player();
     _controller = VideoController(_player);
+    checkForSavedFile();
 
     // Add a listener to the validation trigger notifier to respond to validation changes.
     widget.validationTriggerNotifier.addListener(_onValidationTrigger);
   }
 
+  void checkForSavedFile() async {
+    final savedFile = await _retrieveSavedVideoFile();
+    if (savedFile?.path != null) {
+      _handleSavedVideoFile(savedFile!);
+    }
+  }
+
   @override
   void dispose() {
     // Dispose of the video player to release resources.
-    _player.dispose();
+    if (_videoFile?.path != null) {
+      _player.dispose();
+    }
 
     // Remove the listener from the validation trigger notifier to avoid memory leaks.
     widget.validationTriggerNotifier.removeListener(_onValidationTrigger);
@@ -161,18 +173,26 @@ class StewardVideoPickerFieldState extends State<StewardVideoPickerField> {
     // Prompt the user to pick or capture a video
     final pickedVideo = await filePickerHelper.pickOrCaptureVideo();
 
-    // If a video file was picked, save it and update the form state
     if (pickedVideo.file != null) {
       final savedFilePath = await _saveVideoFile(File(pickedVideo.file!.path));
       if (savedFilePath != null) {
-        _updateFormState(savedFilePath);
         setState(() {
-          _videoFile = File(savedFilePath);
-          _hasVideo = true;
+          _isLoading = true; // Start showing the loader
         });
-        _initializeVideoPlayer();
+        _updateFormState(savedFilePath);
+        _handleSavedVideoFile(File(savedFilePath));
       }
     }
+  }
+
+  // If a video file was picked, save it and update the form state
+  void _handleSavedVideoFile(File savedFile) {
+    _updateFormState(savedFile.path);
+    setState(() {
+      _videoFile = savedFile;
+      _hasVideo = true;
+    });
+    _initializeVideoPlayer();
   }
 
   /// Initializes the video player with the selected video file.
@@ -185,8 +205,18 @@ class StewardVideoPickerFieldState extends State<StewardVideoPickerField> {
   Future<void> _initializeVideoPlayer() async {
     // Check if a video file is available
     if (_videoFile != null) {
-      await _player.open(Media(_videoFile!.path));
-      setState(() {});
+      try {
+        await _player.open(
+          Media(_videoFile!.path),
+          play: false, // Do not auto-play the video
+        );
+      } catch (e) {
+        print("Error initializing video player: $e");
+      } finally {
+        setState(() {
+          _isLoading = false; // Hide the loader after the video is loaded
+        });
+      }
     }
   }
 
@@ -202,9 +232,9 @@ class StewardVideoPickerFieldState extends State<StewardVideoPickerField> {
     // Get the directory where the video file will be saved
     Directory? directory = await _getSaveDirectory();
     if (directory != null && await directory.exists()) {
-      // Generate a unique file path using the current timestamp
+      // Generate a unique file path using the field name and current timestamp
       final filePath =
-          '${directory.path}/${DateTime.now().millisecondsSinceEpoch}.mp4';
+          '${directory.path}/${widget.field.name}_${DateTime.now().millisecondsSinceEpoch}.mp4';
       try {
         // Copy the video file to the new location
         await videoFile.copy(filePath);
@@ -214,6 +244,39 @@ class StewardVideoPickerFieldState extends State<StewardVideoPickerField> {
       }
     }
     return null; // Return null if the save operation failed
+  }
+
+  Future<File?> _retrieveSavedVideoFile() async {
+    // Get the directory where the video files are saved
+    Directory? directory = await _getSaveDirectory();
+    if (directory != null && await directory.exists()) {
+      try {
+        // List all the files in the directory
+        List<FileSystemEntity> files = directory.listSync();
+
+        // Filter for files that match the field name and end with .mp4
+        List<FileSystemEntity> videoFiles = files.where((file) {
+          final fileName = file.path.split('/').last;
+          return fileName.startsWith('${widget.field.name}_') &&
+              fileName.endsWith('.mp4');
+        }).toList();
+
+        if (videoFiles.isNotEmpty) {
+          // Sort the files by last modified date (most recent first)
+          videoFiles.sort((a, b) {
+            return File(b.path)
+                .lastModifiedSync()
+                .compareTo(File(a.path).lastModifiedSync());
+          });
+
+          // Return the most recent video file
+          return File(videoFiles.first.path);
+        }
+      } catch (e) {
+        print("Error retrieving video file: $e"); // Log any errors
+      }
+    }
+    return null; // Return null if no video files are found or an error occurs
   }
 
   /// Determines the appropriate directory for saving video files based on the platform.
@@ -414,12 +477,23 @@ class StewardVideoPickerFieldState extends State<StewardVideoPickerField> {
   ///
   /// After calling this method, the user will no longer see any video file
   /// associated with the video picker field.
-  void _deleteVideo() {
+  void _deleteVideo() async {
+    if (_videoFile != null && await _videoFile!.exists()) {
+      try {
+        // Delete the file from the file system
+        await _videoFile!.delete();
+      } catch (e) {
+        print("Error deleting video file: $e");
+      }
+    }
+
+    // Reset the video file and player state
     setState(() {
       _videoFile = null; // Reset the video file
       _hasVideo = false; // Indicate that no video is present
       _player.stop(); // Stop any video playback
     });
+
     _updateFormState(null); // Update form state to reflect the deletion
   }
 
@@ -443,19 +517,29 @@ class StewardVideoPickerFieldState extends State<StewardVideoPickerField> {
   /// error message if applicable.
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Stack(
       children: [
-        Text(
-          widget.field.label,
-          style: Theme.of(context).textTheme.bodyMedium, // Display field label
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.field.label,
+              style:
+                  Theme.of(context).textTheme.bodyMedium, // Display field label
+            ),
+            const SizedBox(
+                height: 8.0), // Add space between label and video container
+            _buildVideoContainer(), // Build the container for video controls
+            if (_errorMessage != null) ...[
+              displayErrorMessage(_errorMessage, context),
+            ],
+          ],
         ),
-        const SizedBox(
-            height: 8.0), // Add space between label and video container
-        _buildVideoContainer(), // Build the container for video controls
-        if (_errorMessage != null) ...[
-          displayErrorMessage(_errorMessage, context),
-        ],
+        // Loader
+        if (_isLoading)
+          const Center(
+            child: CircularProgressIndicator(),
+          ),
       ],
     );
   }
