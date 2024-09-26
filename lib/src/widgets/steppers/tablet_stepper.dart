@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
+import 'package:form_steward/src/utils/breakpoints.dart';
 
 /// A widget that builds the tablet layout for the stepper,
 /// which includes a scrollable list of steps on the left and the form content on the right.
@@ -185,47 +186,52 @@ class StepListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final scallingFactor =  screenWidth <= Breakpoints.lg ? 0.3 : 0.2;
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: SizedBox(
-        width: MediaQuery.of(context).size.width * 0.30,
+        width: screenWidth * scallingFactor,
         child: Card(
-          child: Scrollbar(
-            controller: scrollController,
-            thumbVisibility: true,
-            interactive: true,
-            thickness: 1.2,
-            child: ListView.builder(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical:20.0),
+            child: Scrollbar(
               controller: scrollController,
-              itemCount: formSteps.length,
-              itemBuilder: (context, index) {
-                final theme = Theme.of(context);
-                final isActive = index == currentStepNotifier.value;
-                    
-                return ListTile(
-                  leading: CircleAvatar(
-                    radius: 14,
-                    backgroundColor: isActive
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.onSurface.withOpacity(0.1),
-                    foregroundColor: isActive
-                        ? theme.colorScheme.onPrimary
-                        : theme.colorScheme.onSurface,
-                    child: Text(
-                      '${index + 1}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+              thumbVisibility: true,
+              interactive: true,
+              thickness: 1.2,
+              child: ListView.builder(
+                controller: scrollController,
+                itemCount: formSteps.length,
+                itemBuilder: (context, index) {
+                  final theme = Theme.of(context);
+                  final isActive = index == currentStepNotifier.value;
+                      
+                  return ListTile(
+                    leading: CircleAvatar(
+                      radius: 14,
+                      backgroundColor: isActive
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurface.withOpacity(0.1),
+                      foregroundColor: isActive
+                          ? theme.colorScheme.onPrimary
+                          : theme.colorScheme.onSurface,
+                      child: Text(
+                        '${index + 1}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
-                  ),
-                  title: Text(
-                    formSteps[index].title,
-                    style: isActive
-                        ? TextStyle(color: theme.colorScheme.primary)
-                        : null,
-                  ),
-                  selected: isActive,
-                  onTap: () => onStepTap(index),
-                );
-              },
+                    title: Text(
+                      formSteps[index].title,
+                      style: isActive
+                          ? TextStyle(color: theme.colorScheme.primary)
+                          : null,
+                    ),
+                    selected: isActive,
+                    onTap: () => onStepTap(index),
+                  );
+                },
+              ),
             ),
           ),
         ),
@@ -255,43 +261,52 @@ class FormContentWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Card(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 15),
-            Expanded(
-              child: SingleChildScrollView(
-                child: IndexedStack(
-                  index: currentStepNotifier.value,
-                  children: stepWidgets,
-                ),
-              ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10.0,),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (currentStepNotifier.value > 0)
-                  ElevatedButton(
-                    onPressed: goToPreviousStep,
-                    child: const Text('Back'),
-                  )
-                else
-                  const Spacer(flex: 3),
-                Text('${currentStepNotifier.value + 1}/${formSteps.length}'),
-                if (currentStepNotifier.value == 0) const Spacer(flex: 2),
-                currentStepNotifier.value == formSteps.length - 1
-                    ? ElevatedButton(
-                        onPressed: submitForm,
-                        child: const Text('Submit'),
-                      )
-                    : ElevatedButton(
-                        onPressed: goToNextStep,
-                        child: const Text('Next'),
-                      ),
+                const SizedBox(height: 15),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: IndexedStack(
+                      index: currentStepNotifier.value,
+                      children: stepWidgets,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical:  8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      if (currentStepNotifier.value > 0)
+                        ElevatedButton(
+                          onPressed: goToPreviousStep,
+                          child: const Text('Back'),
+                        )
+                      else
+                        const Spacer(flex: 3),
+                      Text('${currentStepNotifier.value + 1}/${formSteps.length}'),
+                      if (currentStepNotifier.value == 0) const Spacer(flex: 2),
+                      currentStepNotifier.value == formSteps.length - 1
+                          ? ElevatedButton(
+                              onPressed: submitForm,
+                              child: const Text('Submit'),
+                            )
+                          : ElevatedButton(
+                              onPressed: goToNextStep,
+                              child: const Text('Next'),
+                            ),
+                    ],
+                  ),
+                ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
