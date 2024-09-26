@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 import 'package:form_steward/src/utils/file_picker/steward_file_picker_helper.dart';
@@ -50,41 +51,23 @@ class StewardVideoPickerField extends StatefulWidget {
   StewardVideoPickerFieldState createState() => StewardVideoPickerFieldState();
 }
 
-/// The state for the `StewardVideoPickerField` widget.
 class StewardVideoPickerFieldState extends State<StewardVideoPickerField> {
-  /// An instance of [FilePickerHelper] to assist with file picking operations.
   final FilePickerHelper filePickerHelper = FilePickerHelper();
-
-  /// The selected video file, if any.
-  File? _videoFile;
-
-  /// The player used for video playback.
+  dynamic
+      _videoFile; // Changed to dynamic to support both File and web-specific file types
   late final Player _player;
-
-  /// The controller for managing video playback and state.
   late final VideoController _controller;
-
-  /// A flag indicating whether the recording is in progress.
   bool _isRecording = false;
-
-  /// A flag indicating whether a video has been successfully selected or recorded.
   bool _hasVideo = false;
-
-  /// An error message to display when validation fails or an error occurs.
   String? _errorMessage;
-
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-
-    // Initialize the video player and controller.
     _player = Player();
     _controller = VideoController(_player);
     checkForSavedFile();
-
-    // Add a listener to the validation trigger notifier to respond to validation changes.
     widget.validationTriggerNotifier.addListener(_onValidationTrigger);
   }
 
@@ -108,86 +91,58 @@ class StewardVideoPickerFieldState extends State<StewardVideoPickerField> {
     super.dispose();
   }
 
-  /// Initiates video recording or picking from the device.
-  ///
-  /// This method checks if the platform is mobile and requests the necessary
-  /// permissions before allowing the user to record a video. If permission
-  /// is granted, it sets the recording state to true, prompts the user to
-  /// capture a video, and saves the recorded video file. Once saved, it
-  /// updates the form state with the file path and initializes the video player.
-  /// Finally, it resets the recording state to false.
-  ///
-  /// If the platform is not mobile, a dialog will be displayed to inform
-  /// the user that video recording is unsupported.
-  ///
-  /// Returns:
-  /// - A [Future] that completes when the video recording process is finished.
+  // ... (keep existing dispose method)
+
   Future<void> _recordVideo() async {
-    // Check if the platform supports video recording
-    if (!_isMobilePlatform()) {
+    if (!_isSupportedPlatform()) {
       _showUnsupportedRecordingDialog();
       return;
     }
 
-    // Request permissions to access the camera and storage
     bool permissionGranted = await _requestPermission();
     if (!permissionGranted) return;
 
-    // Update the state to indicate recording is in progress
     setState(() {
       _isRecording = true;
     });
 
-    // Prompt the user to capture a video
     final pickedVideo =
         await filePickerHelper.pickOrCaptureVideo(capture: true);
 
-    // If a video file was picked, save it and update the form state
     if (pickedVideo.file != null) {
-      final savedFilePath = await _saveVideoFile(File(pickedVideo.file!.path));
+      final savedFilePath = await _saveVideoFile(pickedVideo.file!);
       if (savedFilePath != null) {
         _updateFormState(savedFilePath);
         setState(() {
-          _videoFile = File(savedFilePath);
+          _videoFile = kIsWeb ? pickedVideo.file : File(savedFilePath);
           _hasVideo = true;
         });
         _initializeVideoPlayer();
       }
     }
 
-    // Reset the recording state
     setState(() {
       _isRecording = false;
     });
   }
 
-  /// Prompts the user to pick a video file from the device.
-  ///
-  /// This method uses the `filePickerHelper` to allow the user to either pick
-  /// an existing video or capture a new one. If a video file is successfully
-  /// picked, it saves the file and updates the form state accordingly.
-  ///
-  /// Returns:
-  /// - A [Future] that completes when the video picking process is finished.
   Future<void> _pickVideo() async {
-    // Prompt the user to pick or capture a video
     final pickedVideo = await filePickerHelper.pickOrCaptureVideo();
 
     if (pickedVideo.file != null) {
-      final savedFilePath = await _saveVideoFile(File(pickedVideo.file!.path));
+      final savedFilePath = await _saveVideoFile(pickedVideo.file!);
       if (savedFilePath != null) {
         setState(() {
-          _isLoading = true; // Start showing the loader
+          _isLoading = true;
         });
         _updateFormState(savedFilePath);
-        _handleSavedVideoFile(File(savedFilePath));
+        _handleSavedVideoFile(kIsWeb ? pickedVideo.file : File(savedFilePath));
       }
     }
   }
 
-  // If a video file was picked, save it and update the form state
-  void _handleSavedVideoFile(File savedFile) {
-    _updateFormState(savedFile.path);
+  void _handleSavedVideoFile(dynamic savedFile) {
+    _updateFormState(kIsWeb ? savedFile.name : savedFile.path);
     setState(() {
       _videoFile = savedFile;
       _hasVideo = true;
@@ -195,66 +150,60 @@ class StewardVideoPickerFieldState extends State<StewardVideoPickerField> {
     _initializeVideoPlayer();
   }
 
-  /// Initializes the video player with the selected video file.
-  ///
-  /// This method opens the video file using the player. If a video file
-  /// is available, it sets up the player to prepare for playback.
-  ///
-  /// Returns:
-  /// - A [Future] that completes when the video player is initialized.
   Future<void> _initializeVideoPlayer() async {
-    // Check if a video file is available
     if (_videoFile != null) {
       try {
         await _player.open(
-          Media(_videoFile!.path),
-          play: false, // Do not auto-play the video
+          kIsWeb
+              ? Media(Uri.parse(_videoFile.path).toString())
+              : Media(_videoFile.path),
+          play: false,
         );
       } catch (e) {
         print("Error initializing video player: $e");
       } finally {
         setState(() {
-          _isLoading = false; // Hide the loader after the video is loaded
+          _isLoading = false;
         });
       }
     }
   }
 
-  /// Saves the selected video file to a specified directory.
-  ///
-  /// This method attempts to copy the provided [videoFile] to a designated
-  /// save directory. The file is named with a timestamp to ensure uniqueness.
-  ///
-  /// Returns:
-  /// - A [Future<String?>] that resolves to the path of the saved video file
-  ///   if successful, or null if the save operation failed.
-  Future<String?> _saveVideoFile(File videoFile) async {
-    // Get the directory where the video file will be saved
+  Future<String?> _saveVideoFile(dynamic videoFile) async {
+    if (kIsWeb) {
+      // For web, we can't save files locally. Return a URL or identifier instead.
+      return videoFile.name; // or some unique identifier
+    }
+
     Directory? directory = await _getSaveDirectory();
     if (directory != null && await directory.exists()) {
-      // Generate a unique file path using the field name and current timestamp
       final filePath =
           '${directory.path}/${widget.field.name}_${DateTime.now().millisecondsSinceEpoch}.mp4';
       try {
-        // Copy the video file to the new location
-        await videoFile.copy(filePath);
-        return filePath; // Return the path of the saved file
+        if (videoFile is File) {
+          await videoFile.copy(filePath);
+        } else {
+          // Handle other file types if necessary
+          // This might involve writing the file data to the new path
+        }
+        return filePath;
       } catch (e) {
-        print("Error saving video file: $e"); // Log any errors
+        print("Error saving video file: $e");
       }
     }
-    return null; // Return null if the save operation failed
+    return null;
   }
 
-  Future<File?> _retrieveSavedVideoFile() async {
-    // Get the directory where the video files are saved
+  Future<dynamic> _retrieveSavedVideoFile() async {
+    if (kIsWeb) {
+      // For web, implement retrieval from IndexedDB or other web storage
+      return null; // Placeholder for web implementation
+    }
+
     Directory? directory = await _getSaveDirectory();
     if (directory != null && await directory.exists()) {
       try {
-        // List all the files in the directory
         List<FileSystemEntity> files = directory.listSync();
-
-        // Filter for files that match the field name and end with .mp4
         List<FileSystemEntity> videoFiles = files.where((file) {
           final fileName = file.path.split('/').last;
           return fileName.startsWith('${widget.field.name}_') &&
@@ -262,64 +211,41 @@ class StewardVideoPickerFieldState extends State<StewardVideoPickerField> {
         }).toList();
 
         if (videoFiles.isNotEmpty) {
-          // Sort the files by last modified date (most recent first)
           videoFiles.sort((a, b) {
             return File(b.path)
                 .lastModifiedSync()
                 .compareTo(File(a.path).lastModifiedSync());
           });
-
-          // Return the most recent video file
           return File(videoFiles.first.path);
         }
       } catch (e) {
-        print("Error retrieving video file: $e"); // Log any errors
+        print("Error retrieving video file: $e");
       }
     }
-    return null; // Return null if no video files are found or an error occurs
+    return null;
   }
 
-  /// Determines the appropriate directory for saving video files based on the platform.
-  ///
-  /// This method checks the platform (Android or iOS) and returns the appropriate
-  /// directory for storing video files. It defaults to the application documents
-  /// directory if the platform is not recognized.
-  ///
-  /// Returns:
-  /// - A [Future<Directory?>] that resolves to the directory for saving video files,
-  ///   or null if the directory cannot be determined.
   Future<Directory?> _getSaveDirectory() async {
+    if (kIsWeb) return null;
     if (Platform.isAndroid) {
-      return Directory(
-          '/storage/emulated/0/Movies'); // Default path for Android
+      return Directory('/storage/emulated/0/Movies');
     }
-    if (Platform.isIOS) {
-      return await getApplicationDocumentsDirectory(); // Default path for iOS
+    if (Platform.isIOS || Platform.isMacOS) {
+      return await getApplicationDocumentsDirectory();
     }
-    return await getApplicationDocumentsDirectory(); // Fallback for other platforms
+    if (Platform.isWindows || Platform.isLinux) {
+      return await getApplicationDocumentsDirectory();
+    }
+    return await getApplicationDocumentsDirectory();
   }
 
-  /// Requests the necessary permissions to access the camera, microphone, and storage.
-  ///
-  /// This method checks the current status of the camera, microphone, and storage
-  /// permissions. If any permission is not granted, it requests the user for
-  /// the necessary permissions. If the user denies any of the permissions, a
-  /// dialog will be shown informing them of the need for permissions.
-  ///
-  /// Returns:
-  /// - A [Future<bool>] that resolves to true if all permissions are granted,
-  ///   or false if any permission was denied.
   Future<bool> _requestPermission() async {
-    // Check permissions for Android and iOS platforms
+    if (kIsWeb) return true; // Web doesn't require explicit permissions
     if (Platform.isAndroid || Platform.isIOS) {
-      var cameraStatus =
-          await Permission.camera.status; // Check camera permission status
-      var microphoneStatus = await Permission
-          .microphone.status; // Check microphone permission status
-      var storageStatus =
-          await Permission.storage.status; // Check storage permission status
+      var cameraStatus = await Permission.camera.status;
+      var microphoneStatus = await Permission.microphone.status;
+      var storageStatus = await Permission.storage.status;
 
-      // If any permission is not granted, request permissions
       if (!cameraStatus.isGranted ||
           !microphoneStatus.isGranted ||
           !storageStatus.isGranted) {
@@ -327,19 +253,20 @@ class StewardVideoPickerFieldState extends State<StewardVideoPickerField> {
           Permission.camera,
           Permission.microphone,
           Permission.storage,
-        ].request(); // Request permissions
+        ].request();
 
-        // Check if any permission was denied
         if (statuses[Permission.camera]!.isDenied ||
             statuses[Permission.microphone]!.isDenied ||
             statuses[Permission.storage]!.isDenied) {
-          _showPermissionDialog(); // Show dialog if permissions are denied
-          return false; // Return false if any permission is denied
+          _showPermissionDialog();
+          return false;
         }
       }
     }
-    return true; // Return true if all permissions are granted
+    return true;
   }
+
+  // ... (keep existing _showPermissionDialog and _showUnsupportedRecordingDialog methods)
 
   /// Displays a dialog informing the user that camera, microphone, and storage
   /// permissions are required to record and save videos.
@@ -411,32 +338,23 @@ class StewardVideoPickerFieldState extends State<StewardVideoPickerField> {
     );
   }
 
-  /// Updates the form state with the provided video file path.
-  ///
-  /// This method checks whether the file path is valid based on the field's
-  /// validation requirements. If the file path is valid, it clears any error
-  /// message and updates the form state with the new value.
-  ///
-  /// The form state is updated through the provided `formStewardStateNotifier`.
-  ///
-  /// Parameters:
-  /// - [filePath]: The path of the video file to be saved. If null and the
-  ///   field is required, the field will be marked as invalid.
   void _updateFormState(String? filePath) {
     bool isValid =
         filePath != null || widget.field.validation?.required != true;
     if (isValid) {
       setState(() {
-        _errorMessage = null; // Clear error message if valid
+        _errorMessage = null;
       });
     }
     widget.formStewardStateNotifier.updateField(
       stepName: widget.stepName,
       fieldName: widget.field.name,
       value: filePath,
-      isValid: isValid, // Update validity based on file path
+      isValid: isValid,
     );
   }
+
+  // ... (keep existing _onValidationTrigger and _validate methods)
 
   /// Triggers validation when the validation notifier indicates a change in state.
   ///
@@ -469,52 +387,35 @@ class StewardVideoPickerFieldState extends State<StewardVideoPickerField> {
     }
   }
 
-  /// Deletes the currently selected video and updates the form state.
-  ///
-  /// This method resets the video file and related state variables to their
-  /// initial values, stops the video player, and updates the form state
-  /// to indicate that no video file is selected.
-  ///
-  /// After calling this method, the user will no longer see any video file
-  /// associated with the video picker field.
   void _deleteVideo() async {
-    if (_videoFile != null && await _videoFile!.exists()) {
+    if (kIsWeb) {
+      // Implement web-specific deletion logic if necessary
+    } else if (_videoFile != null && await (_videoFile as File).exists()) {
       try {
-        // Delete the file from the file system
-        await _videoFile!.delete();
+        await (_videoFile as File).delete();
       } catch (e) {
         print("Error deleting video file: $e");
       }
     }
 
-    // Reset the video file and player state
     setState(() {
-      _videoFile = null; // Reset the video file
-      _hasVideo = false; // Indicate that no video is present
-      _player.stop(); // Stop any video playback
+      _videoFile = null;
+      _hasVideo = false;
+      _player.stop();
     });
 
-    _updateFormState(null); // Update form state to reflect the deletion
+    _updateFormState(null);
   }
 
-  /// Checks if the current platform is mobile (Android or iOS).
-  ///
-  /// This method returns a boolean value indicating whether the app is running
-  /// on a mobile platform. It is used to determine if video recording features
-  /// are supported, as they may not be available on non-mobile platforms.
-  bool _isMobilePlatform() {
-    return Platform.isAndroid ||
-        Platform.isIOS; // Returns true if the platform is Android or iOS
+  bool _isSupportedPlatform() {
+    return kIsWeb ||
+        Platform.isAndroid ||
+        Platform.isIOS ||
+        Platform.isWindows ||
+        Platform.isLinux ||
+        Platform.isMacOS;
   }
 
-  /// Builds the widget tree for the video picker field.
-  ///
-  /// This method constructs the visual representation of the video picker field,
-  /// including the label, video container, and any error messages. It utilizes
-  /// a column layout to arrange these elements vertically.
-  ///
-  /// Returns a [Column] widget containing the label, video container, and
-  /// error message if applicable.
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -524,18 +425,15 @@ class StewardVideoPickerFieldState extends State<StewardVideoPickerField> {
           children: [
             Text(
               widget.field.label,
-              style:
-                  Theme.of(context).textTheme.bodyMedium, // Display field label
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
-            const SizedBox(
-                height: 8.0), // Add space between label and video container
-            _buildVideoContainer(), // Build the container for video controls
+            const SizedBox(height: 8.0),
+            _buildVideoContainer(),
             if (_errorMessage != null) ...[
               displayErrorMessage(_errorMessage, context),
             ],
           ],
         ),
-        // Loader
         if (_isLoading)
           const Center(
             child: CircularProgressIndicator(),
@@ -544,103 +442,69 @@ class StewardVideoPickerFieldState extends State<StewardVideoPickerField> {
     );
   }
 
-  /// Builds the container that holds the video preview and controls.
-  ///
-  /// This method creates a container with a border and rounded corners.
-  /// Inside the container, it arranges the video preview and control elements
-  /// in a vertical column layout.
-  ///
-  /// Returns a [Container] widget that contains the video preview and controls.
   Widget _buildVideoContainer() {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey), // Border around the container
-        borderRadius: BorderRadius.circular(8), // Rounded corners
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(8),
       ),
-      padding: const EdgeInsets.all(8), // Padding inside the container
+      padding: const EdgeInsets.all(8),
       child: Column(
         children: [
-          _buildVideoPreview(), // Build the video preview
-          const SizedBox(height: 8), // Space between preview and controls
-          _buildVideoControls(), // Build the video control buttons
+          _buildVideoPreview(),
+          const SizedBox(height: 8),
+          _buildVideoControls(),
         ],
       ),
     );
   }
 
-  /// Builds the video preview section.
-  ///
-  /// This method checks if a video has been recorded. If a video exists,
-  /// it displays the video using an [AspectRatio] widget to maintain
-  /// the correct dimensions. If no video is selected, it displays a message
-  /// indicating that no video is available.
-  ///
-  /// Returns an [AspectRatio] widget containing the video player or a message
-  /// if no video is selected.
   Widget _buildVideoPreview() {
     if (_hasVideo) {
       return AspectRatio(
-        aspectRatio: 16 / 9, // Maintain 16:9 aspect ratio for video
-        child: Video(controller: _controller), // Display the video
+        aspectRatio: 16 / 9,
+        child: Video(controller: _controller),
       );
     } else {
       return const AspectRatio(
-        aspectRatio: 16 / 9, // Maintain 16:9 aspect ratio for placeholder
-        child: Center(
-            child: Text(
-                'No video selected')), // Message when no video is available
+        aspectRatio: 16 / 9,
+        child: Center(child: Text('No video selected')),
       );
     }
   }
 
-  /// Builds the video control buttons for recording and playing videos.
-  ///
-  /// This method constructs a row of buttons that allow the user to record a
-  /// new video, select a video from the library, play or pause the currently
-  /// selected video, and delete the video if one has been recorded. The
-  /// controls are arranged evenly within the row.
-  ///
-  /// Returns a [Row] widget containing the video control buttons.
   Widget _buildVideoControls() {
     return Row(
-      mainAxisAlignment:
-          MainAxisAlignment.spaceEvenly, // Evenly distribute buttons
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        if (_isMobilePlatform())
+        if (_isSupportedPlatform())
           IconButton(
-            icon: Icon(_isRecording
-                ? Icons.stop
-                : Icons.videocam), // Toggle icon based on recording state
-            onPressed: _isRecording
-                ? null
-                : _recordVideo, // Disable button if recording
-            color: Colors.blue, // Color for the recording button
+            icon: Icon(_isRecording ? Icons.stop : Icons.videocam),
+            onPressed: _isRecording ? null : _recordVideo,
+            color: Colors.blue,
           ),
         IconButton(
-          icon: const Icon(Icons.photo_library), // Icon for picking a video
-          onPressed:
-              _isRecording ? null : _pickVideo, // Disable button if recording
-          color: Colors.green, // Color for the pick video button
+          icon: const Icon(Icons.photo_library),
+          onPressed: _isRecording ? null : _pickVideo,
+          color: Colors.green,
         ),
         if (_hasVideo) ...[
           IconButton(
-            icon: Icon(_player.state.playing
-                ? Icons.pause
-                : Icons.play_arrow), // Toggle play/pause icon
+            icon: Icon(_player.state.playing ? Icons.pause : Icons.play_arrow),
             onPressed: () {
               if (_player.state.playing) {
-                _player.pause(); // Pause the video if playing
+                _player.pause();
               } else {
-                _player.play(); // Play the video if paused
+                _player.play();
               }
-              setState(() {}); // Update the UI
+              setState(() {});
             },
-            color: Colors.orange, // Color for the play/pause button
+            color: Colors.orange,
           ),
           IconButton(
-            icon: const Icon(Icons.delete), // Icon for deleting the video
-            onPressed: _deleteVideo, // Action to delete the video
-            color: Colors.red, // Color for the delete button
+            icon: const Icon(Icons.delete),
+            onPressed: _deleteVideo,
+            color: Colors.red,
           ),
         ],
       ],
