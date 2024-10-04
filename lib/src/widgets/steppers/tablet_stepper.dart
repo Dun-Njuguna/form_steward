@@ -168,8 +168,6 @@ class TabletStepperWidgetState extends State<TabletStepperWidget> {
   }
 }
 
-
-
 class StepListWidget extends StatelessWidget {
   final List<FormStepModel> formSteps;
   final ValueNotifier<int> currentStepNotifier;
@@ -187,14 +185,14 @@ class StepListWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final scallingFactor =  screenWidth <= Breakpoints.lg ? 0.3 : 0.2;
+    final scallingFactor = screenWidth <= Breakpoints.lg ? 0.3 : 0.2;
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: SizedBox(
         width: screenWidth * scallingFactor,
         child: Card(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical:20.0),
+            padding: const EdgeInsets.symmetric(vertical: 20.0),
             child: Scrollbar(
               controller: scrollController,
               thumbVisibility: true,
@@ -206,7 +204,7 @@ class StepListWidget extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final theme = Theme.of(context);
                   final isActive = index == currentStepNotifier.value;
-                      
+
                   return ListTile(
                     leading: CircleAvatar(
                       radius: 14,
@@ -265,7 +263,9 @@ class FormContentWidget extends StatelessWidget {
         padding: const EdgeInsets.all(10.0),
         child: Card(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0,),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -279,7 +279,7 @@ class FormContentWidget extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical:  8.0),
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -290,7 +290,8 @@ class FormContentWidget extends StatelessWidget {
                         )
                       else
                         const Spacer(flex: 3),
-                      Text('${currentStepNotifier.value + 1}/${formSteps.length}'),
+                      Text(
+                          '${currentStepNotifier.value + 1}/${formSteps.length}'),
                       if (currentStepNotifier.value == 0) const Spacer(flex: 2),
                       currentStepNotifier.value == formSteps.length - 1
                           ? ElevatedButton(
@@ -312,3 +313,4 @@ class FormContentWidget extends StatelessWidget {
     );
   }
 }
+

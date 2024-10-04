@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:form_steward/src/state/form_steward_state_notifier.dart';
-import 'package:form_steward/src/state/validation_trigger_notifier.dart';
+import 'package:form_steward/form_steward.dart';
+import 'package:form_steward/src/widgets/form_builder/responsive_field_layout.dart';
 import 'package:media_kit/media_kit.dart';
-import '../../models/form_step_model.dart';
-import 'form_field_widget.dart';
 
 /// A widget that builds a dynamic form based on a list of form steps.
 ///
@@ -42,7 +40,6 @@ class FormBuilder extends StatefulWidget {
 }
 
 class _FormBuilderState extends State<FormBuilder> {
-
   @override
   void initState() {
     super.initState();
@@ -62,23 +59,15 @@ class _FormBuilderState extends State<FormBuilder> {
             step.name: fieldsValidity,
           },
         );
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ...step.fields.map((field) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 5.0),
-                child: FormFieldWidget(
-                  field: field,
-                  stepName: step.name,
-                  validationTriggerNotifier: widget.validationTriggerNotifier,
-                  formStewardStateNotifier: widget.formStewardStateNotifier,
-                ),
-              );
-            }),
-          ],
+        return ResponsiveFieldLayout(
+          step: step,
+          validationTriggerNotifier: widget.validationTriggerNotifier,
+          formStewardStateNotifier: widget.formStewardStateNotifier,
         );
       }).toList(),
     );
   }
 }
+
+
+
