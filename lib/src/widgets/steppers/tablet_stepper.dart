@@ -185,7 +185,8 @@ class StepListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenSize = MediaQuery.of(context).size;
+    final screenWidth = screenSize.width;
     final scallingFactor = screenWidth <= Breakpoints.lg ? 0.3 : 0.15;
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -194,10 +195,13 @@ class StepListWidget extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           child: SizedBox(
             width: screenWidth * scallingFactor,
-            child: StepIndicator(
-              formSteps: formSteps,
-              currentStep: currentStepNotifier.value,
-              stepperType: StewardStepperType.tablet,
+            height: screenSize.height,
+            child: SingleChildScrollView(
+              child: StepIndicator(
+                formSteps: formSteps,
+                currentStep: currentStepNotifier.value,
+                stepperType: StewardStepperType.tablet,
+              ),
             ),
           ),
         ),
