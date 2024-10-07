@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 import 'package:form_steward/src/utils/breakpoints.dart';
+import 'package:form_steward/src/widgets/steppers/step_indicator.dart';
 
 /// A widget that builds the tablet layout for the stepper,
 /// which includes a scrollable list of steps on the left and the form content on the right.
@@ -185,51 +186,18 @@ class StepListWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final scallingFactor = screenWidth <= Breakpoints.lg ? 0.3 : 0.2;
+    final scallingFactor = screenWidth <= Breakpoints.lg ? 0.3 : 0.15;
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: SizedBox(
-        width: screenWidth * scallingFactor,
-        child: Card(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20.0),
-            child: Scrollbar(
-              controller: scrollController,
-              thumbVisibility: true,
-              interactive: true,
-              thickness: 1.2,
-              child: ListView.builder(
-                controller: scrollController,
-                itemCount: formSteps.length,
-                itemBuilder: (context, index) {
-                  final theme = Theme.of(context);
-                  final isActive = index == currentStepNotifier.value;
-
-                  return ListTile(
-                    leading: CircleAvatar(
-                      radius: 14,
-                      backgroundColor: isActive
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurface.withOpacity(0.1),
-                      foregroundColor: isActive
-                          ? theme.colorScheme.onPrimary
-                          : theme.colorScheme.onSurface,
-                      child: Text(
-                        '${index + 1}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    title: Text(
-                      formSteps[index].title,
-                      style: isActive
-                          ? TextStyle(color: theme.colorScheme.primary)
-                          : null,
-                    ),
-                    selected: isActive,
-                    onTap: () => onStepTap(index),
-                  );
-                },
-              ),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: SizedBox(
+            width: screenWidth * scallingFactor,
+            child: StepIndicator(
+              formSteps: formSteps,
+              currentStep: currentStepNotifier.value,
+              stepperType: StewardStepperType.tablet,
             ),
           ),
         ),
@@ -313,4 +281,3 @@ class FormContentWidget extends StatelessWidget {
     );
   }
 }
-
