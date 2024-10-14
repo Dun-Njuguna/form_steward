@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 import 'package:form_steward/src/utils/helpers.dart';
+import 'package:form_steward/src/utils/step_notifier_utility.dart';
 import 'package:form_steward/src/widgets/steppers/step_indicator.dart';
 
 /// A horizontal stepper widget that displays a multi-step form.
@@ -41,12 +42,12 @@ class HorizontalStepper extends StatefulWidget {
 /// The state for the [HorizontalStepper] widget.
 class HorizontalStepperState extends State<HorizontalStepper> {
   /// Notifier for the current step index.
-  late final ValueNotifier<int> _currentStepNotifier;
+  late final StepNotifierUtility _currentStepNotifier;
 
   @override
   void initState() {
     super.initState();
-    _currentStepNotifier = ValueNotifier<int>(0);
+    _currentStepNotifier = StepNotifierUtility();
   }
 
   /// Moves to the next step if possible.
@@ -72,7 +73,7 @@ class HorizontalStepperState extends State<HorizontalStepper> {
   /// [index] is the new step index.
   void updateCurrentStep(int index) {
     setState(() {
-      _currentStepNotifier.value = index;
+      _currentStepNotifier.updateCurrentStep(index);
     });
   }
 
@@ -89,13 +90,13 @@ class HorizontalStepperState extends State<HorizontalStepper> {
         children: [
           StepIndicator(
             formSteps: widget.formSteps,
-            currentStep: _currentStepNotifier.value,
+            currentStep: _currentStepNotifier.getCurrentStep(),
             stepperType: StewardStepperType.horizontal,
           ),
           Expanded(
             child: SingleChildScrollView(
               child: IndexedStack(
-                index: _currentStepNotifier.value,
+                index: _currentStepNotifier.getCurrentStep(),
                 children:
                     List<Widget>.generate(widget.formSteps.length, (int index) {
                   return FormBuilder(
@@ -108,17 +109,19 @@ class HorizontalStepperState extends State<HorizontalStepper> {
             ),
           ),
           StepButtonsRow(
-            currentStep: _currentStepNotifier.value,
+            currentStep: _currentStepNotifier.getCurrentStep(),
             totalSteps: widget.formSteps.length,
-            onPrevious: () => _goToPreviousStep(_currentStepNotifier.value - 1),
+            onPrevious: () =>
+                _goToPreviousStep(_currentStepNotifier.getCurrentStep() - 1),
             onNext: () {
               widget.formStewardNotifier.triggerValidation(
-                widget.formSteps[_currentStepNotifier.value].name,
+                widget.formSteps[_currentStepNotifier.getCurrentStep()].name,
               );
               if (widget.formStewardStateNotifier.isStepValid(
-                stepName: widget.formSteps[_currentStepNotifier.value].name,
+                stepName: widget
+                    .formSteps[_currentStepNotifier.getCurrentStep()].name,
               )) {
-                _goToNextStep(_currentStepNotifier.value + 1);
+                _goToNextStep(_currentStepNotifier.getCurrentStep() + 1);
               } else {
                 widget.formStewardNotifier.reset();
               }

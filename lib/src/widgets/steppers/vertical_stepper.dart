@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:form_steward/src/state/form_steward_state_notifier.dart';
 import 'package:form_steward/src/state/validation_trigger_notifier.dart';
 import 'package:form_steward/src/models/form_step_model.dart';
+import 'package:form_steward/src/utils/step_notifier_utility.dart';
 import 'package:form_steward/src/widgets/form_builder/form_builder.dart';
 
 /// A vertical stepper widget that displays a multi-step form.
@@ -52,15 +53,12 @@ class VerticalStepper extends StatefulWidget {
 /// The state for the [VerticalStepper] widget.
 class VerticalStepperState extends State<VerticalStepper> {
   /// Notifier for the current step index.
-  late final ValueNotifier<int> _currentStepNotifier;
-
-  /// The index of the current step.
-  int currentStep = 0;
+  late final StepNotifierUtility _currentStepNotifier;
 
   @override
   void initState() {
     super.initState();
-    _currentStepNotifier = ValueNotifier<int>(0);
+    _currentStepNotifier = StepNotifierUtility();
   }
 
   /// Moves to the next step if possible and submits the current step's data.
@@ -68,14 +66,14 @@ class VerticalStepperState extends State<VerticalStepper> {
   /// [index] is the index of the next step.
   void _goToNextStep(int index) {
     final data = widget.formStewardStateNotifier.getCurrentStepData(
-      currentStepName: widget.formSteps[currentStep].name
-    );
+        currentStepName:
+            widget.formSteps[_currentStepNotifier.getCurrentStep()].name);
     if (data != null) {
       widget.onSubmit(data);
     }
     if (index < widget.formSteps.length) {
       setState(() {
-        currentStep = index;
+        _currentStepNotifier.updateCurrentStep(index);
       });
     }
   }
@@ -86,7 +84,7 @@ class VerticalStepperState extends State<VerticalStepper> {
   void _goToPreviousStep(int index) {
     if (index < widget.formSteps.length) {
       setState(() {
-        currentStep = index;
+        _currentStepNotifier.updateCurrentStep(index);
       });
     }
   }
@@ -108,10 +106,10 @@ class VerticalStepperState extends State<VerticalStepper> {
           validationTriggerNotifier: widget.formStewardNotifier,
           formStewardStateNotifier: widget.formStewardStateNotifier,
         ),
-        isActive: index == _currentStepNotifier.value,
-        state: index < _currentStepNotifier.value
+        isActive: index == _currentStepNotifier.getCurrentStep(),
+        state: index < _currentStepNotifier.getCurrentStep()
             ? StepState.complete
-            : (index == _currentStepNotifier.value
+            : (index == _currentStepNotifier.getCurrentStep()
                 ? StepState.editing
                 : StepState.indexed),
       );
@@ -121,26 +119,28 @@ class VerticalStepperState extends State<VerticalStepper> {
   @override
   Widget build(BuildContext context) {
     return Stepper(
-      currentStep: currentStep,
+      currentStep: _currentStepNotifier.getCurrentStep(),
       onStepTapped: (int index) {
-        if (currentStep > index) {
+        if (_currentStepNotifier.getCurrentStep() > index) {
           _goToPreviousStep(index);
         } else {
-          currentStep == widget.formSteps.length - 1
+          _currentStepNotifier.getCurrentStep() == widget.formSteps.length - 1
               ? _submitForm()
               : _goToNextStep(index);
         }
       },
-      onStepContinue: currentStep == widget.formSteps.length - 1
-          ? () => _submitForm()
-          : () => _goToNextStep(currentStep + 1),
-      onStepCancel: () => _goToPreviousStep(currentStep - 1),
+      onStepContinue:
+          _currentStepNotifier.getCurrentStep() == widget.formSteps.length - 1
+              ? () => _submitForm()
+              : () => _goToNextStep(_currentStepNotifier.getCurrentStep() + 1),
+      onStepCancel: () =>
+          _goToPreviousStep(_currentStepNotifier.getCurrentStep() - 1),
       steps: _buildSteps(),
       controlsBuilder: (BuildContext context, ControlsDetails details) {
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            if (currentStep > 0)
+            if (_currentStepNotifier.getCurrentStep() > 0)
               ElevatedButton(
                 onPressed: details.onStepCancel,
                 child: const Text('Back'),
@@ -149,11 +149,12 @@ class VerticalStepperState extends State<VerticalStepper> {
             ElevatedButton(
               onPressed: () {
                 // Trigger validation for the current step
-                widget.formStewardNotifier
-                    .triggerValidation(widget.formSteps[currentStep].name);
+                widget.formStewardNotifier.triggerValidation(widget
+                    .formSteps[_currentStepNotifier.getCurrentStep()].name);
                 // Check if the current step is valid
                 if (widget.formStewardStateNotifier.isStepValid(
-                  stepName: widget.formSteps[currentStep].name,
+                  stepName: widget
+                      .formSteps[_currentStepNotifier.getCurrentStep()].name,
                 )) {
                   // If valid, continue to the next step or submit
                   details.onStepContinue!();
@@ -163,7 +164,10 @@ class VerticalStepperState extends State<VerticalStepper> {
                 }
               },
               child: Text(
-                currentStep == widget.formSteps.length - 1 ? 'Submit' : 'Next',
+                _currentStepNotifier.getCurrentStep() ==
+                        widget.formSteps.length - 1
+                    ? 'Submit'
+                    : 'Next',
               ),
             ),
           ],

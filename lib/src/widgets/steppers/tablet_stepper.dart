@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 import 'package:form_steward/src/utils/breakpoints.dart';
+import 'package:form_steward/src/utils/step_notifier_utility.dart';
 import 'package:form_steward/src/widgets/steppers/step_indicator.dart';
 
 /// A widget that builds the tablet layout for the stepper,
@@ -39,10 +40,10 @@ class TabletStepperWidget extends StatefulWidget {
 }
 
 class TabletStepperWidgetState extends State<TabletStepperWidget> {
-  late final ValueNotifier<int> _currentStepNotifier;
+  late final StepNotifierUtility _currentStepNotifier;
   late final ScrollController _scrollController;
   final double _itemHeight = 62;
-  late final int currentStep;
+  bool _isDisposed = false; // Flag to check if the widget is disposed
 
   late final List<Widget> stepWidgets = widget.formSteps.map((step) {
     return FormBuilder(
@@ -55,38 +56,29 @@ class TabletStepperWidgetState extends State<TabletStepperWidget> {
   @override
   void initState() {
     super.initState();
+    _isDisposed = false;
+    _currentStepNotifier = StepNotifierUtility();
     _scrollController = ScrollController();
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _currentStepNotifier = ValueNotifier<int>(0);
-    currentStep = _currentStepNotifier.value;
-  }
-
-  @override
   void dispose() {
-    _currentStepNotifier.dispose();
+    _isDisposed = true;
+    _scrollController.dispose();
     super.dispose();
   }
 
   @override
   void didUpdateWidget(covariant TabletStepperWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (_currentStepNotifier.value == currentStep) {
-      currentStep = _currentStepNotifier.value;
-      _scrollToActiveStep();
-    }
   }
 
   /// Moves to the next step if possible.
   ///
   /// [index] is the index of the next step.
   void _goToNextStep() {
-    final nextStep = _currentStepNotifier.value + 1;
-    if (_currentStepNotifier.value + 1 < widget.formSteps.length) {
-      updateCurrentStep(nextStep);
+    if (_currentStepNotifier.getCurrentStep() + 1 < widget.formSteps.length) {
+      updateCurrentStep(_currentStepNotifier.getCurrentStep() + 1);
     }
   }
 
@@ -94,7 +86,7 @@ class TabletStepperWidgetState extends State<TabletStepperWidget> {
   ///
   /// [index] is the index of the previous step.
   void _goToPreviousStep() {
-    final previousStep = _currentStepNotifier.value - 1;
+    final previousStep = _currentStepNotifier.getCurrentStep() - 1;
     if (previousStep >= 0) {
       updateCurrentStep(previousStep);
     }
@@ -105,7 +97,7 @@ class TabletStepperWidgetState extends State<TabletStepperWidget> {
   /// [index] is the new step index.
   void updateCurrentStep(int index) {
     setState(() {
-      _currentStepNotifier.value = index;
+      _currentStepNotifier.updateCurrentStep(index);
     });
   }
 
@@ -115,19 +107,23 @@ class TabletStepperWidgetState extends State<TabletStepperWidget> {
   }
 
   /// Scrolls to the active step if it is not visible in the scrollable list.
-  void _scrollToActiveStep() {
+  void _scrollToActiveStep(_) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final stepIndex = _currentStepNotifier.value;
+      // Check if the widget is disposed before proceeding
+      if (_isDisposed) return;
+      final stepIndex = _currentStepNotifier.getCurrentStep();
       final itemOffset = _itemHeight * stepIndex;
 
       if (_isStepVisible(stepIndex)) {
         return;
       }
-      _scrollController.animateTo(
-        itemOffset,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          itemOffset,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
     });
   }
 
@@ -151,8 +147,8 @@ class TabletStepperWidgetState extends State<TabletStepperWidget> {
           scrollController: _scrollController,
           onStepTap: (index) {
             setState(() {
-              _currentStepNotifier.value = index;
-              _scrollToActiveStep();
+              updateCurrentStep(index);
+              _scrollToActiveStep(null);
             });
           },
         ),
@@ -171,7 +167,7 @@ class TabletStepperWidgetState extends State<TabletStepperWidget> {
 
 class StepListWidget extends StatelessWidget {
   final List<FormStepModel> formSteps;
-  final ValueNotifier<int> currentStepNotifier;
+  final StepNotifierUtility currentStepNotifier;
   final ScrollController scrollController;
   final Function(int) onStepTap;
 
@@ -187,7 +183,7 @@ class StepListWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
     final screenWidth = screenSize.width;
-    final scallingFactor = screenWidth <= Breakpoints.lg ? 0.3 : 0.15;
+    final scallingFactor = screenWidth <= Breakpoints.lg ? 0.2 : 0.15;
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Card(
@@ -199,7 +195,7 @@ class StepListWidget extends StatelessWidget {
             child: SingleChildScrollView(
               child: StepIndicator(
                 formSteps: formSteps,
-                currentStep: currentStepNotifier.value,
+                currentStep: currentStepNotifier.getCurrentStep(),
                 stepperType: StewardStepperType.tablet,
               ),
             ),
@@ -211,7 +207,7 @@ class StepListWidget extends StatelessWidget {
 }
 
 class FormContentWidget extends StatelessWidget {
-  final ValueNotifier<int> currentStepNotifier;
+  final StepNotifierUtility currentStepNotifier;
   final List<Widget> stepWidgets;
   final List<FormStepModel> formSteps;
   final VoidCallback goToPreviousStep;
@@ -245,7 +241,7 @@ class FormContentWidget extends StatelessWidget {
                 Expanded(
                   child: SingleChildScrollView(
                     child: IndexedStack(
-                      index: currentStepNotifier.value,
+                      index: currentStepNotifier.getCurrentStep(),
                       children: stepWidgets,
                     ),
                   ),
@@ -255,7 +251,7 @@ class FormContentWidget extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      if (currentStepNotifier.value > 0)
+                      if (currentStepNotifier.getCurrentStep() > 0)
                         ElevatedButton(
                           onPressed: goToPreviousStep,
                           child: const Text('Back'),
@@ -263,9 +259,11 @@ class FormContentWidget extends StatelessWidget {
                       else
                         const Spacer(flex: 3),
                       Text(
-                          '${currentStepNotifier.value + 1}/${formSteps.length}'),
-                      if (currentStepNotifier.value == 0) const Spacer(flex: 2),
-                      currentStepNotifier.value == formSteps.length - 1
+                          '${currentStepNotifier.getCurrentStep() + 1}/${formSteps.length}'),
+                      if (currentStepNotifier.getCurrentStep() == 0)
+                        const Spacer(flex: 2),
+                      currentStepNotifier.getCurrentStep() ==
+                              formSteps.length - 1
                           ? ElevatedButton(
                               onPressed: submitForm,
                               child: const Text('Submit'),

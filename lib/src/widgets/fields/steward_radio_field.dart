@@ -76,7 +76,7 @@ class StewardRadioFieldState extends State<StewardRadioField> {
               // Display the field's label as the title.
               Text(
                 widget.field.label,
-                style: TextStyle(
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: _errorMessage != null
                         ? Theme.of(context).colorScheme.error
                         : null),
