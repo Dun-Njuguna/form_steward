@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:form_steward/src/models/form_step_model.dart';
 import 'package:form_steward/src/state/form_steward_state.dart';
 
 /// A [ChangeNotifier] class that manages the form state and provides methods
 /// to update form data, step validity, and trigger submission actions.
-/// 
-/// [FormStewardStateNotifier] maintains and modifies [FormStewardState] using 
-/// [notifyListeners] to update any listeners when state changes. It provides 
+///
+/// [FormStewardStateNotifier] maintains and modifies [FormStewardState] using
+/// [notifyListeners] to update any listeners when state changes. It provides
 /// methods for initializing step validity, updating field values and validity,
 /// and retrieving current form data.
 class FormStewardStateNotifier extends ChangeNotifier {
@@ -17,10 +16,10 @@ class FormStewardStateNotifier extends ChangeNotifier {
   FormStewardState get state => _state;
 
   /// Initializes the validity for a specific step in the form.
-  /// 
+  ///
   /// This method merges the provided step validity into the existing form state,
   /// either updating fields in an existing step or adding a new step with its fields.
-  /// 
+  ///
   /// [stepValidity] - A map containing the step name as the key and a nested map
   /// of field names and their boolean validity statuses as the value.
   void initializeStepValidity({

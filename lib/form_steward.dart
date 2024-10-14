@@ -27,10 +27,6 @@
 ///     - [horizontal]: Shows steps in a horizontal layout. Navigation controls are positioned alongside the content.
 ///     - [tablet]: Optimized for tablet screens, displaying the list of steps on the left and the content of the active step on the right.
 ///
-/// - **Controllers:** Manage the state and navigation of the form.
-///   - [FormController]: Controls the form's state, including validation and saving data. Manages interactions between form fields and validation rules.
-///   - [StepController]: Manages step navigation within a stepper, including advancing to the next step, going back to the previous step, and checking the current step's position.
-///
 /// - **Services:** Provide functionality for loading and fetching form configurations.
 ///   - [FormService]: Loads form configurations from JSON strings and parses them into [FormStepModel] instances, facilitating dynamic form creation.
 ///   - [ApiService]: Fetches form configurations from a remote server via HTTP requests, enabling integration with backend systems for form data retrieval.
@@ -60,10 +56,6 @@ export 'src/state/form_steward_state_notifier.dart';
 
 // Exporting enums
 export 'src/utils/enums/steward_stepper_type.dart';
-
-// Exporting controllers
-export 'src/controllers/form_controller.dart';
-export 'src/controllers/step_controller.dart';
 
 // Exporting services
 export 'src/services/form_service.dart';

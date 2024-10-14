@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:form_steward/src/state/form_steward_state_notifier.dart';
 import 'package:form_steward/src/state/validation_trigger_notifier.dart';
 import 'package:form_steward/src/models/form_step_model.dart';
-import 'package:form_steward/src/utils/step_notifier_utility.dart';
+import 'package:form_steward/src/controllers/step_controller.dart';
 import 'package:form_steward/src/widgets/form_builder/form_builder.dart';
 
 /// A vertical stepper widget that displays a multi-step form.
@@ -53,12 +53,12 @@ class VerticalStepper extends StatefulWidget {
 /// The state for the [VerticalStepper] widget.
 class VerticalStepperState extends State<VerticalStepper> {
   /// Notifier for the current step index.
-  late final StepNotifierUtility _currentStepNotifier;
+  late final StepController _currentStepNotifier;
 
   @override
   void initState() {
     super.initState();
-    _currentStepNotifier = StepNotifierUtility();
+    _currentStepNotifier = StepController();
   }
 
   /// Moves to the next step if possible and submits the current step's data.

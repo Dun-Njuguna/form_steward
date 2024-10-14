@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 import 'package:form_steward/src/utils/interfaces/stepper_navigation.dart';
-import 'package:form_steward/src/utils/step_notifier_utility.dart';
+import 'package:form_steward/src/controllers/step_controller.dart';
 import 'package:form_steward/src/widgets/steppers/horizontal_stepper.dart';
 import 'package:form_steward/src/widgets/steppers/tablet_stepper.dart';
 import 'package:form_steward/src/widgets/steppers/vertical_stepper.dart';
@@ -21,7 +21,6 @@ class StepperWidget extends StatefulWidget implements StepperNavigation {
   StepperWidget({
     super.key,
     required this.formSteps,
-    required this.currentStep,
     required this.stepperType,
     required this.formStewardNotifier,
     required this.formStewardStateNotifier,
@@ -58,11 +57,6 @@ class StepperWidget extends StatefulWidget implements StepperNavigation {
     );
   }).toList();
 
-  /// The index of the currently active step.
-  ///
-  /// This determines which step is currently visible and active.
-  final int currentStep;
-
   /// The type of stepper layout to use.
   ///
   /// Defines the layout style of the stepper. Possible values are:
@@ -94,7 +88,7 @@ class StepperWidgetState extends State<StepperWidget> {
   @override
   void dispose() {
     // Dispose StepNotifierUtility Singleton
-    StepNotifierUtility().dispose();
+    StepController().dispose();
     super.dispose();
   }
 

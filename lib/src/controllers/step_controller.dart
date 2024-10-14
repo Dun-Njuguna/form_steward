@@ -1,59 +1,79 @@
-/// A controller that manages the current step in a multi-step process.
+import 'package:flutter/material.dart';
+
+/// A utility class that manages a [ValueNotifier] for an integer step value.
 ///
-/// The [StepController] class provides methods to navigate between steps in a
-/// multi-step process, such as a form with multiple pages. It keeps track of
-/// the current step and provides utility methods to determine the position
-/// within the step sequence.
+/// This class follows the Singleton pattern, ensuring that only a single
+/// instance of the [StepController] exists throughout the app.
+/// It provides methods to access and update the current step value
+/// via the [_currentStepNotifier].
 class StepController {
-  /// The index of the current step.
-  ///
-  /// The index starts at `0` for the first step and increments as the user
-  /// progresses through the steps. The value of [currentStep] represents the
-  /// current position within the sequence of steps.
-  int currentStep = 0;
+  /// The Singleton instance of the [StepController].
+  static final StepController _instance = StepController._internal();
 
-  /// Moves to the next step.
+  /// A [ValueNotifier] that holds the current step value.
   ///
-  /// This method increments the [currentStep] by `1`, advancing to the next
-  /// step in the sequence. Ensure that the step sequence is not already at
-  /// the last step when calling this method.
-  void nextStep() {
-    currentStep += 1;
+  /// The step value is initialized to 0 and can be updated via
+  /// the [updateCurrentStep] method.
+  final ValueNotifier<int> _currentStepNotifier = ValueNotifier<int>(0);
+
+  /// Private constructor for the Singleton instance.
+  ///
+  /// This constructor is only called internally and ensures that
+  /// no additional instances of [StepController] are created.
+  StepController._internal();
+
+  /// Factory constructor that returns the Singleton instance.
+  ///
+  /// This ensures that every time [StepController] is instantiated,
+  /// the same instance is returned.
+  factory StepController() {
+    return _instance;
   }
 
-  /// Moves to the previous step.
+  /// Returns the current step value stored in the [ValueNotifier].
   ///
-  /// This method decrements the [currentStep] by `1`, moving back to the
-  /// previous step in the sequence. It will not decrement below `0`, so if
-  /// the [currentStep] is already `0`, it will remain at `0`.
-  void previousStep() {
-    if (currentStep > 0) {
-      currentStep -= 1;
-    }
+  /// This method allows access to the current value of the step.
+  /// Example usage:
+  /// ```dart
+  /// int currentStep = StepNotifierUtility().getCurrentStep();
+  /// ```
+  int getCurrentStep() {
+    return _currentStepNotifier.value;
   }
 
-  /// Determines if the current step is the first step.
+  /// Updates the current step value stored in the [ValueNotifier].
   ///
-  /// Returns `true` if the [currentStep] is `0`, indicating that the user is
-  /// on the first step of the sequence. Otherwise, it returns `false`.
+  /// This method updates the value of the current step to the provided [step].
+  /// Example usage:
+  /// ```dart
+  /// StepNotifierUtility().updateCurrentStep(5);
+  /// ```
   ///
-  /// This method is useful for disabling the "Previous" button or for other
-  /// logic specific to the first step.
-  bool isFirstStep() {
-    return currentStep == 0;
+  /// [step] is the new value to set for the current step.
+  void updateCurrentStep(int step) {
+    _currentStepNotifier.value = step;
   }
 
-  /// Determines if the current step is the last step.
+  /// Returns the [ValueNotifier] that holds the current step value.
   ///
-  /// Takes the total number of steps as a parameter and returns `true` if the
-  /// [currentStep] is equal to `totalSteps - 1`, indicating that the user is
-  /// on the last step of the sequence. Otherwise, it returns `false`.
+  /// This can be useful if you need to directly listen for changes in the
+  /// step value using a [ValueListenableBuilder].
+  /// Example usage:
+  /// ```dart
+  /// ValueListenableBuilder<int>(
+  ///   valueListenable: StepNotifierUtility().currentStepNotifier,
+  ///   builder: (context, value, child) {
+  ///     return Text('Step: $value');
+  ///   },
+  /// );
+  /// ```
+  ValueNotifier<int> get currentStepNotifier => _currentStepNotifier;
+
+  /// Disposes the [ValueNotifier] to release resources.
   ///
-  /// This method is useful for enabling the "Submit" button or for other
-  /// logic specific to the last step.
-  ///
-  /// - Parameter totalSteps: The total number of steps in the sequence.
-  bool isLastStep(int totalSteps) {
-    return currentStep == totalSteps - 1;
+  /// This should be called when the [StepController] is no longer needed
+  /// to avoid memory leaks.
+  void dispose() {
+    _currentStepNotifier.dispose();
   }
 }

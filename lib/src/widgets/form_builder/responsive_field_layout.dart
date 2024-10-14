@@ -20,29 +20,28 @@ class ResponsiveFieldLayout extends StatelessWidget {
     // Calculate the number of columns based on screen width
     int numberOfColumns =
         (screenWidth ~/ 300).clamp(1, 3); // Minimum 1 column, maximum 4
-    List<List<Widget>> columns = _distributeFields(step.fields, numberOfColumns);
+    List<List<Widget>> columns =
+        _distributeFields(step.fields, numberOfColumns);
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: List.generate(
-          columns.length,
-          (columnIndex) {
-            return Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: columns[columnIndex],
-              ),
-            );
-          },
-        ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: List.generate(
+        columns.length,
+        (columnIndex) {
+          return Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: columns[columnIndex],
+            ),
+          );
+        },
       ),
     );
   }
 
   /// Helper method to distribute fields into columns based on height.
-  List<List<Widget>> _distributeFields(List<FieldModel> fields, int numberOfColumns) {
+  List<List<Widget>> _distributeFields(
+      List<FieldModel> fields, int numberOfColumns) {
     // Initialize empty lists for each column
     List<List<Widget>> columns = List.generate(numberOfColumns, (_) => []);
 
@@ -54,7 +53,11 @@ class ResponsiveFieldLayout extends StatelessWidget {
       int shortestColumnIndex = _findShortestColumnIndex(columns);
       columns[shortestColumnIndex].add(
         Padding(
-          padding: const EdgeInsets.only(right: 8.0, left: 8.0, bottom: 8.0,),
+          padding: const EdgeInsets.only(
+            right: 8.0,
+            left: 8.0,
+            bottom: 8.0,
+          ),
           child: FormFieldWidget(
             field: field,
             stepName: step.name,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 import 'package:form_steward/src/utils/breakpoints.dart';
-import 'package:form_steward/src/utils/step_notifier_utility.dart';
+import 'package:form_steward/src/controllers/step_controller.dart';
 import 'package:form_steward/src/widgets/steppers/step_indicator.dart';
 
 /// A widget that builds the tablet layout for the stepper,
@@ -40,7 +40,7 @@ class TabletStepperWidget extends StatefulWidget {
 }
 
 class TabletStepperWidgetState extends State<TabletStepperWidget> {
-  late final StepNotifierUtility _currentStepNotifier;
+  late final StepController _currentStepNotifier;
   late final ScrollController _scrollController;
   final double _itemHeight = 62;
   bool _isDisposed = false; // Flag to check if the widget is disposed
@@ -57,7 +57,7 @@ class TabletStepperWidgetState extends State<TabletStepperWidget> {
   void initState() {
     super.initState();
     _isDisposed = false;
-    _currentStepNotifier = StepNotifierUtility();
+    _currentStepNotifier = StepController();
     _scrollController = ScrollController();
   }
 
@@ -167,7 +167,7 @@ class TabletStepperWidgetState extends State<TabletStepperWidget> {
 
 class StepListWidget extends StatelessWidget {
   final List<FormStepModel> formSteps;
-  final StepNotifierUtility currentStepNotifier;
+  final StepController currentStepNotifier;
   final ScrollController scrollController;
   final Function(int) onStepTap;
 
@@ -207,7 +207,7 @@ class StepListWidget extends StatelessWidget {
 }
 
 class FormContentWidget extends StatelessWidget {
-  final StepNotifierUtility currentStepNotifier;
+  final StepController currentStepNotifier;
   final List<Widget> stepWidgets;
   final List<FormStepModel> formSteps;
   final VoidCallback goToPreviousStep;

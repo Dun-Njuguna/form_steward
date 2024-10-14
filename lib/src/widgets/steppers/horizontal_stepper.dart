@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 import 'package:form_steward/src/utils/helpers.dart';
-import 'package:form_steward/src/utils/step_notifier_utility.dart';
+import 'package:form_steward/src/controllers/step_controller.dart';
 import 'package:form_steward/src/widgets/steppers/step_indicator.dart';
 
 /// A horizontal stepper widget that displays a multi-step form.
@@ -42,12 +42,12 @@ class HorizontalStepper extends StatefulWidget {
 /// The state for the [HorizontalStepper] widget.
 class HorizontalStepperState extends State<HorizontalStepper> {
   /// Notifier for the current step index.
-  late final StepNotifierUtility _currentStepNotifier;
+  late final StepController _currentStepNotifier;
 
   @override
   void initState() {
     super.initState();
-    _currentStepNotifier = StepNotifierUtility();
+    _currentStepNotifier = StepController();
   }
 
   /// Moves to the next step if possible.
