@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
+import 'package:form_steward/src/utils/breakpoints.dart';
 import 'package:form_steward/src/utils/helpers.dart';
 
 /// A widget that represents a date input field within a form managed by Form Steward.
@@ -127,11 +128,16 @@ class StewardDateFieldState extends State<StewardDateField> {
               contentPadding: const EdgeInsets.all(10),
               content: SizedBox(
                 height: size.height / 3,
-                width: size.width,
+                width:
+                    size.width > Breakpoints.sm ? size.width / 3 : size.width,
                 child: Scrollbar(
                   thumbVisibility: true,
                   child: GridView.count(
-                    crossAxisCount: 3,
+                    crossAxisCount: size.width > Breakpoints.sm
+                        ? size.width > Breakpoints.lg
+                            ? 5
+                            : 4
+                        : 3,
                     children: [
                       ...List.generate(
                         130,

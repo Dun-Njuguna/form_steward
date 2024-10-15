@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
+import 'package:form_steward/src/utils/breakpoints.dart';
 import 'package:form_steward/src/utils/helpers.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 
@@ -63,6 +64,7 @@ class StewardMobileFieldState extends State<StewardMobileField> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -103,10 +105,11 @@ class StewardMobileFieldState extends State<StewardMobileField> {
               _updateFormState(isValid: isValid);
             },
             keyboardType: TextInputType.phone,
-            selectorConfig: const SelectorConfig(
-              selectorType: PhoneInputSelectorType.BOTTOM_SHEET,
+            selectorConfig: SelectorConfig(
+              selectorType: screenWidth <= Breakpoints.sm
+                  ? PhoneInputSelectorType.BOTTOM_SHEET
+                  : PhoneInputSelectorType.DROPDOWN,
             ),
-            initialValue: phoneNumber,
           ),
         ),
         displayErrorMessage(_errorMessage, context),
