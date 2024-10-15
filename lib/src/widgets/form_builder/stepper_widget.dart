@@ -22,8 +22,6 @@ class StepperWidget extends StatefulWidget implements StepperNavigation {
     super.key,
     required this.formSteps,
     required this.stepperType,
-    required this.formStewardNotifier,
-    required this.formStewardStateNotifier,
   });
 
   /// A list of [FormStepModel] objects, each representing a step in the stepper.
@@ -31,6 +29,22 @@ class StepperWidget extends StatefulWidget implements StepperNavigation {
   /// Each [FormStepModel] should include the content and validation requirements
   /// for the specific step.
   final List<FormStepModel> formSteps;
+
+  /// The type of stepper layout to use.
+  ///
+  /// Defines the layout style of the stepper. Possible values are:
+  /// - [StewardStepperType.vertical]
+  /// - [StewardStepperType.horizontal]
+  /// - [StewardStepperType.tablet]
+  final StewardStepperType stepperType;
+
+  /// Notifier for triggering form validation.
+  final ValidationTriggerNotifier formStewardNotifier =
+      ValidationTriggerNotifier.instance;
+
+  /// Notifier for managing the form state.
+  final FormStewardStateNotifier formStewardStateNotifier =
+      FormStewardStateNotifier.instance;
 
   /// A list of [Widget]s where each widget is a [FormBuilder] instance.
   ///
@@ -57,20 +71,6 @@ class StepperWidget extends StatefulWidget implements StepperNavigation {
     );
   }).toList();
 
-  /// The type of stepper layout to use.
-  ///
-  /// Defines the layout style of the stepper. Possible values are:
-  /// - [StewardStepperType.vertical]
-  /// - [StewardStepperType.horizontal]
-  /// - [StewardStepperType.tablet]
-  final StewardStepperType stepperType;
-
-  /// Notifier for triggering form validation.
-  final ValidationTriggerNotifier formStewardNotifier;
-
-  /// Notifier for managing the form state.
-  final FormStewardStateNotifier formStewardStateNotifier;
-
   @override
   StepperWidgetState createState() => StepperWidgetState();
 
@@ -84,7 +84,11 @@ class StepperWidget extends StatefulWidget implements StepperNavigation {
   void onSubmit({required Map<String, Map<String, dynamic>> formData}) {}
 }
 
-class StepperWidgetState extends State<StepperWidget> {
+class StepperWidgetState extends State<StepperWidget>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   @override
   void dispose() {
     // Dispose StepNotifierUtility Singleton
@@ -94,6 +98,7 @@ class StepperWidgetState extends State<StepperWidget> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     switch (widget.stepperType) {
       case StewardStepperType.vertical:
         return VerticalStepper(

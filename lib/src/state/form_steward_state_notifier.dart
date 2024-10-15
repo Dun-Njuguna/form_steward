@@ -9,6 +9,18 @@ import 'package:form_steward/src/state/form_steward_state.dart';
 /// methods for initializing step validity, updating field values and validity,
 /// and retrieving current form data.
 class FormStewardStateNotifier extends ChangeNotifier {
+  // Private static instance
+  static FormStewardStateNotifier? _instance;
+
+  // Private constructor
+  FormStewardStateNotifier._internal();
+
+  // Singleton instance getter
+  static FormStewardStateNotifier get instance {
+    _instance ??= FormStewardStateNotifier._internal();
+    return _instance!;
+  }
+
   /// Holds the current form state including step validity and form data.
   FormStewardState _state = FormStewardState(stepValidity: {}, formData: {});
 
