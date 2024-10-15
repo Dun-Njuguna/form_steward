@@ -18,11 +18,17 @@ class HorizontalStepper extends StatefulWidget {
   /// Notifier for managing the state of the form steward.
   final FormStewardStateNotifier formStewardStateNotifier;
 
+  /// Callback function to be called when a step is completed.
+  ///
+  /// The function takes a Map<String, dynamic> as an argument,
+  /// representing the step data for the current step.
+  final Function(Map<String, dynamic>) submitStepData;
+
   /// Callback function to be called when the form is submitted.
   ///
   /// The function takes a Map<String, Map<String, dynamic>> as an argument,
   /// representing the form data.
-  final Function(Map<String, Map<String, dynamic>>) onSubmit;
+  final Function(Map<String, Map<String, dynamic>>) submitFormData;
 
   /// Creates a [HorizontalStepper] widget.
   ///
@@ -32,7 +38,8 @@ class HorizontalStepper extends StatefulWidget {
     required this.formSteps,
     required this.formStewardNotifier,
     required this.formStewardStateNotifier,
-    required this.onSubmit,
+    required this.submitStepData,
+    required this.submitFormData,
   });
 
   @override
@@ -55,6 +62,12 @@ class HorizontalStepperState extends State<HorizontalStepper> {
   /// [index] is the index of the next step.
   void _goToNextStep(int index) {
     if (index < widget.formSteps.length) {
+      final data = widget.formStewardStateNotifier.getCurrentStepData(
+          currentStepName:
+              widget.formSteps[_currentStepNotifier.getCurrentStep()].name);
+      if (data != null) {
+        widget.submitStepData(data);
+      }
       updateCurrentStep(index);
     }
   }
@@ -79,7 +92,7 @@ class HorizontalStepperState extends State<HorizontalStepper> {
 
   /// Submits the form by calling the [onSubmit] callback.
   void _submitForm() {
-    widget.onSubmit(widget.formStewardStateNotifier.getFormData());
+    widget.submitFormData(widget.formStewardStateNotifier.getFormData());
   }
 
   @override

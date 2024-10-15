@@ -29,11 +29,17 @@ class VerticalStepper extends StatefulWidget {
   /// the data for each step and validation status.
   final FormStewardStateNotifier formStewardStateNotifier;
 
-  /// Callback function to be called when a step is completed or the form is submitted.
+  /// Callback function to be called when a step is completed.
   ///
   /// The function takes a Map<String, dynamic> as an argument,
-  /// representing the form data for the current step or the entire form.
-  final Function(Map<String, dynamic>) onSubmit;
+  /// representing the step data for the current step.
+  final Function(Map<String, dynamic>) submitStepData;
+
+  /// Callback function to be called when the form is submitted.
+  ///
+  /// The function takes a Map<String, Map<String, dynamic>> as an argument,
+  /// representing the form data.
+  final Function(Map<String, Map<String, dynamic>>) submitFormData;
 
   /// Creates a [VerticalStepper] widget.
   ///
@@ -43,7 +49,8 @@ class VerticalStepper extends StatefulWidget {
     required this.formSteps,
     required this.formStewardNotifier,
     required this.formStewardStateNotifier,
-    required this.onSubmit,
+    required this.submitStepData,
+    required this.submitFormData,
   });
 
   @override
@@ -69,7 +76,7 @@ class VerticalStepperState extends State<VerticalStepper> {
         currentStepName:
             widget.formSteps[_currentStepNotifier.getCurrentStep()].name);
     if (data != null) {
-      widget.onSubmit(data);
+      widget.submitStepData(data);
     }
     if (index < widget.formSteps.length) {
       setState(() {
@@ -91,7 +98,7 @@ class VerticalStepperState extends State<VerticalStepper> {
 
   /// Submits the entire form by calling the [onSubmit] callback with all form data.
   void _submitForm() {
-    widget.onSubmit(widget.formStewardStateNotifier.getFormData());
+    widget.submitFormData(widget.formStewardStateNotifier.getFormData());
   }
 
   /// Builds the list of [Step] widgets for the [Stepper].

@@ -100,8 +100,11 @@ class StepperWidgetState extends State<StepperWidget> {
           formSteps: widget.formSteps,
           formStewardNotifier: widget.formStewardNotifier,
           formStewardStateNotifier: widget.formStewardStateNotifier,
-          onSubmit: (formData) {
-            widget.onNextStep(previousStepData: formData);
+          submitStepData: (stepData) {
+            widget.onNextStep(previousStepData: stepData);
+          },
+          submitFormData: (formData) {
+            widget.onSubmit(formData: formData);
           },
         );
       case StewardStepperType.horizontal:
@@ -109,7 +112,10 @@ class StepperWidgetState extends State<StepperWidget> {
           formSteps: widget.formSteps,
           formStewardNotifier: widget.formStewardNotifier,
           formStewardStateNotifier: widget.formStewardStateNotifier,
-          onSubmit: (formData) {
+          submitStepData: (stepData) {
+            widget.onNextStep(previousStepData: stepData);
+          },
+          submitFormData: (formData) {
             widget.onSubmit(formData: formData);
           },
         );
@@ -118,11 +124,10 @@ class StepperWidgetState extends State<StepperWidget> {
           formSteps: widget.formSteps,
           formStewardNotifier: widget.formStewardNotifier,
           formStewardStateNotifier: widget.formStewardStateNotifier,
-          onNext: (formData) {
-            widget.onNextStep(previousStepData: formData);
+          submitStepData: (stepData) {
+            widget.onNextStep(previousStepData: stepData);
           },
-          onPrevious: () {},
-          onSubmit: (formData) {
+          submitFormData: (formData) {
             widget.onSubmit(formData: formData);
           },
         );

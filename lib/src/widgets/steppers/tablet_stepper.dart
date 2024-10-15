@@ -16,23 +16,25 @@ class TabletStepperWidget extends StatefulWidget {
   /// Notifier for managing the state of the form steward.
   final FormStewardStateNotifier formStewardStateNotifier;
 
+  /// Callback function to be called when a step is completed.
+  ///
+  /// The function takes a Map<String, dynamic> as an argument,
+  /// representing the step data for the current step.
+  final Function(Map<String, dynamic>) submitStepData;
+
   /// Callback function to be called when the form is submitted.
   ///
   /// The function takes a Map<String, Map<String, dynamic>> as an argument,
   /// representing the form data.
-  final Function(Map<String, Map<String, dynamic>>) onSubmit;
-
-  final Function(Map<String, dynamic>) onNext;
-  final Function() onPrevious;
+  final Function(Map<String, Map<String, dynamic>>) submitFormData;
 
   const TabletStepperWidget({
     super.key,
     required this.formSteps,
     required this.formStewardNotifier,
     required this.formStewardStateNotifier,
-    required this.onNext,
-    required this.onPrevious,
-    required this.onSubmit,
+    required this.submitStepData,
+    required this.submitFormData,
   });
 
   @override
@@ -78,6 +80,12 @@ class TabletStepperWidgetState extends State<TabletStepperWidget> {
   /// [index] is the index of the next step.
   void _goToNextStep() {
     if (_currentStepNotifier.getCurrentStep() + 1 < widget.formSteps.length) {
+      final data = widget.formStewardStateNotifier.getCurrentStepData(
+          currentStepName:
+              widget.formSteps[_currentStepNotifier.getCurrentStep()].name);
+      if (data != null) {
+        widget.submitStepData(data);
+      }
       updateCurrentStep(_currentStepNotifier.getCurrentStep() + 1);
     }
   }
@@ -103,7 +111,7 @@ class TabletStepperWidgetState extends State<TabletStepperWidget> {
 
   /// Submits the form by calling the [onSubmit] callback.
   void _submitForm() {
-    widget.onSubmit(widget.formStewardStateNotifier.getFormData());
+    widget.submitFormData(widget.formStewardStateNotifier.getFormData());
   }
 
   /// Scrolls to the active step if it is not visible in the scrollable list.
