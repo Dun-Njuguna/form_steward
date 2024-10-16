@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_steward/form_steward.dart';
 import 'package:form_steward/src/models/option_model.dart';
+import 'package:form_steward/src/utils/breakpoints.dart';
 import 'package:form_steward/src/utils/helpers.dart';
 
 /// A custom form DropDown field for selecting an option from a list.
@@ -220,7 +221,7 @@ class SelectionDialogState extends State<SelectionDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: _buildDialogTitle(),
-      content: _buildDialogContent(),
+      content: _buildDialogContent(context),
     );
   }
 
@@ -264,10 +265,16 @@ class SelectionDialogState extends State<SelectionDialog> {
   }
 
   /// Builds the main content of the dialog.
-  Widget _buildDialogContent() {
+  Widget _buildDialogContent(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final dialogWidth = screenWidth <= Breakpoints.sm
+        ? double.maxFinite
+        : screenWidth <= Breakpoints.lg
+            ? screenWidth / 2
+            : screenWidth / 3;
     return SizedBox(
       height: 200,
-      width: double.maxFinite,
+      width: dialogWidth,
       child: FutureBuilder<List<OptionModel>>(
         future: widget.options,
         builder: (context, snapshot) {
